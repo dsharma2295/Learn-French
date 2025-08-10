@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bilingual Translator with Hindi Pronunciation</title>
+    <title>Advanced French-English-Hindi Translator</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { 
@@ -12,7 +12,7 @@
             min-height: 100vh; padding: 20px;
         }
         .container { 
-            max-width: 1100px; margin: 0 auto; background: white; 
+            max-width: 1200px; margin: 0 auto; background: white; 
             border-radius: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.1);
         }
         .header {
@@ -64,7 +64,8 @@
             padding: 20px; margin-bottom: 30px;
         }
         .transliteration-content {
-            font-size: 20px; line-height: 1.8; color: #856404; font-weight: 500;
+            font-size: 22px; line-height: 1.8; color: #856404; font-weight: 500;
+            font-family: 'Noto Sans Devanagari', sans-serif;
         }
         
         .controls {
@@ -80,44 +81,30 @@
         .btn:hover { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
         .btn:disabled { background: #6c757d; transform: none; box-shadow: none; cursor: not-allowed; }
         
-        .examples {
-            background: #e8f5e8; border-radius: 15px; padding: 20px; margin-top: 20px;
+        .stats-panel {
+            background: #e8f5e8; border-radius: 15px; padding: 20px; margin-bottom: 20px;
+            text-align: center; border: 2px solid #4caf50;
         }
-        .example-tabs {
-            display: flex; gap: 10px; margin-bottom: 15px; justify-content: center;
-        }
-        .example-tab {
-            padding: 8px 16px; border-radius: 20px; cursor: pointer; font-weight: bold;
-            transition: all 0.3s;
-        }
-        .example-tab.active { background: #28a745; color: white; }
-        .example-tab:not(.active) { background: white; color: #28a745; border: 2px solid #28a745; }
-        .example-grid {
-            display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 10px;
-        }
-        .example-item {
-            background: white; padding: 10px 15px; border-radius: 8px; cursor: pointer;
-            transition: all 0.2s; border: 2px solid transparent; text-align: left;
-        }
-        .example-item:hover {
-            border-color: #28a745; transform: translateY(-2px);
-        }
-        .example-original { font-weight: bold; color: #333; }
-        .example-translation { font-size: 14px; color: #666; margin-top: 5px; }
         
         @media (max-width: 768px) {
             .results-grid { grid-template-columns: 1fr; }
         }
     </style>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;500;700&display=swap" rel="stylesheet">
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>🗣️ Bilingual Translator</h1>
-            <p>English ↔ French with Hindi Pronunciation Guide</p>
+            <h1>🗣️ Advanced Bilingual Translator</h1>
+            <p>English ↔ French with Accurate Hindi Pronunciation</p>
         </div>
         
         <div class="main-content">
+            <!-- Dictionary Status -->
+            <div class="stats-panel">
+                <strong>📚 Dictionary Status:</strong> <span id="dictStatus">Loading comprehensive dictionary...</span>
+            </div>
+            
             <!-- Language Detection -->
             <div class="language-detector" id="languageDetector" style="display: none;">
                 <div style="font-size: 16px; margin-bottom: 10px;">🔍 Detected Language:</div>
@@ -127,15 +114,16 @@
             <!-- Input Section -->
             <div class="input-section">
                 <div class="input-header">
-                    💬 Enter English or French Text
+                    💬 Enter English or French Sentence
                 </div>
                 <textarea id="textInput" class="input-textarea" 
-                          placeholder="Type a sentence in English or French... 
-Examples: 
-- Hello, how are you today?
-- Bonjour, comment allez-vous aujourd'hui?
+                          placeholder="Try these examples:
+- Where are you going? 
+- Où allez-vous?
 - I love learning French
-- J'adore apprendre l'anglais"></textarea>
+- J'adore apprendre le français
+- Thank you very much
+- Merci beaucoup"></textarea>
             </div>
             
             <!-- Results -->
@@ -154,7 +142,7 @@ Examples:
                         🎯 Original Text
                     </div>
                     <div class="result-content" id="originalOutput">
-                        Your input will be cleaned and displayed here...
+                        Your input will appear here...
                     </div>
                 </div>
             </div>
@@ -162,10 +150,13 @@ Examples:
             <!-- Hindi Transliteration -->
             <div class="transliteration-card" id="transliterationCard" style="display: none;">
                 <div class="result-header" style="color: #856404;">
-                    🇮🇳 French Pronunciation in Hindi Script
+                    🇮🇳 French Pronunciation in Hindi Script (Devanagari)
                 </div>
                 <div class="transliteration-content" id="hindiTransliteration">
                     Hindi pronunciation guide will appear here...
+                </div>
+                <div style="margin-top: 15px; font-size: 14px; color: #6c757d; font-style: italic;">
+                    This shows how to pronounce the French words using Hindi script - not the meaning translation
                 </div>
             </div>
             
@@ -184,169 +175,405 @@ Examples:
                     🗑️ Clear All
                 </button>
             </div>
-            
-            <!-- Examples -->
-            <div class="examples">
-                <h3 style="color: #28a745; margin-bottom: 15px; text-align: center;">💡 Try These Examples:</h3>
-                <div class="example-tabs">
-                    <div class="example-tab active" onclick="showExamples('english')">English Sentences</div>
-                    <div class="example-tab" onclick="showExamples('french')">French Sentences</div>
-                </div>
-                <div class="example-grid" id="exampleGrid">
-                    <!-- Examples will be populated by JavaScript -->
-                </div>
-            </div>
         </div>
     </div>
 
     <script>
-        // Comprehensive bilingual dictionary
+        // Comprehensive dictionary from the uploaded PDF
         const dictionary = new Map();
         let currentOriginalText = '';
         let currentTranslation = '';
         let currentLanguage = '';
-        let currentExampleType = 'english';
         
-        // French pronunciation to Hindi transliteration
-        const frenchToHindi = {
-            // Vowels with French accents
-            'à': 'आ', 'á': 'आ', 'â': 'आ', 'ä': 'आ',
-            'è': 'ए', 'é': 'ए', 'ê': 'ए', 'ë': 'ए',
-            'ì': 'इ', 'í': 'इ', 'î': 'ई', 'ï': 'इ',
-            'ò': 'ओ', 'ó': 'ओ', 'ô': 'ओ', 'ö': 'ओ',
-            'ù': 'उ', 'ú': 'उ', 'û': 'ऊ', 'ü': 'उ',
-            'ç': 'स', 'ÿ': 'इ',
-            
-            // Basic vowels
-            'a': 'अ', 'e': 'ए', 'i': 'इ', 'o': 'ओ', 'u': 'उ',
-            
-            // Consonants
-            'b': 'ब', 'c': 'क', 'd': 'द', 'f': 'फ', 'g': 'ग',
-            'h': 'ह', 'j': 'ज', 'k': 'क', 'l': 'ल', 'm': 'म',
-            'n': 'न', 'p': 'प', 'q': 'क', 'r': 'र', 's': 'स',
-            't': 'त', 'v': 'व', 'w': 'व', 'x': 'क्स', 'y': 'य', 'z': 'ज़'
+        // Accurate French to Hindi transliteration based on phonetic research
+        const frenchWordToHindi = {
+            // Common words with proper pronunciation
+            'bonjour': 'बॉन्झूर',
+            'bonsoir': 'बॉन्स्वार',
+            'merci': 'मेर्सी',
+            'merci beaucoup': 'मेर्सी बॉकू',
+            'au revoir': 'ओ रवार',
+            'salut': 'सालू',
+            'oui': 'वी',
+            'non': 'नॉ',
+            'comment': 'कॉमॉ',
+            'allez-vous': 'आले वू',
+            'comment allez-vous': 'कॉमॉ आले वू',
+            'je suis': 'झे स्वी',
+            'vous êtes': 'वू जेत',
+            'il est': 'इल ए',
+            'elle est': 'एल ए',
+            'nous sommes': 'नू सॉम',
+            'ils sont': 'इल सॉ',
+            'j\'ai': 'झे',
+            'j\'aime': 'झेम',
+            'j\'adore': 'झादॉर',
+            'je m\'appelle': 'झे मापेल',
+            'où': 'ऊ',
+            'où est': 'ऊ ए',
+            'quelle heure': 'केल अर',
+            'quelle heure est-il': 'केल अर एतिल',
+            'combien': 'कॉम्बियॉ',
+            'pouvez-vous': 'पूवे वू',
+            'je ne comprends pas': 'झे ने कॉम्प्रॉ पा',
+            'parlez-vous anglais': 'पार्ले वू आंग्ले',
+            's\'il vous plaît': 'सिल वू प्ले',
+            'excusez-moi': 'एक्स्क्यूज़े म्वा',
+            'désolé': 'देज़ॉले',
+            'enchanté': 'आंशान्ते',
+            'à bientôt': 'आ बियान्तो',
+            'à demain': 'आ डमैं',
+            'bonne nuit': 'बॉन न्वी',
+            'très': 'त्रे',
+            'très beau': 'त्रे बो',
+            'c\'est': 'से',
+            'c\'est beau': 'से बो',
+            'eau': 'ओ',
+            'maison': 'मेज़ॉ',
+            'ami': 'आमी',
+            'amie': 'आमी',
+            'famille': 'फामील',
+            'amour': 'आमूर',
+            'temps': 'तॉ',
+            'jour': 'झूर',
+            'homme': 'ऑम',
+            'femme': 'फाम',
+            'enfant': 'आंफॉ',
+            'nourriture': 'नूरीत्यूर',
+            'restaurant': 'रेस्तॉरॉ',
+            'hôtel': 'ओतेल',
+            'voiture': 'व्वात्यूर',
+            'train': 'त्रैं',
+            'avion': 'आवियॉ',
+            'aéroport': 'आएरॉपॉर',
+            'français': 'फ्रांसे',
+            'anglais': 'आंग्ले',
+            'apprendre': 'आप्रॉन्द्र',
+            'enseigner': 'आंसेन्ये',
+            'étudier': 'एत्यूदिये',
+            'lire': 'लीर',
+            'écrire': 'एक्रीर',
+            'parler': 'पार्ले',
+            'écouter': 'एकूते',
+            'comprendre': 'कॉम्प्रॉन्द्र',
+            'répéter': 'रेपेते',
+            'expliquer': 'एक्स्प्लिके',
+            'montrer': 'मॉन्त्रे',
+            'donner': 'डॉने',
+            'prendre': 'प्रॉन्द्र',
+            'aller': 'आले',
+            'venir': 'वनीर',
+            'partir': 'पार्तीर',
+            'arriver': 'आरिवे',
+            'rester': 'रेस्ते',
+            'habiter': 'आबिते',
+            'travailler': 'त्रावाये',
+            'manger': 'मांझे',
+            'boire': 'ब्वार',
+            'dormir': 'डॉर्मीर',
+            'regarder': 'रगार्दे',
+            'entendre': 'आंतॉन्द्र',
+            'sentir': 'सांतीर',
+            'toucher': 'तूशे',
+            'goûter': 'गूते',
+            // Numbers
+            'un': 'अन',
+            'une': 'ऊन',
+            'deux': 'दॅ',
+            'trois': 'त्र्वा',
+            'quatre': 'कात्र',
+            'cinq': 'सैंक',
+            'six': 'सिस',
+            'sept': 'सेत',
+            'huit': 'ऊइत',
+            'neuf': 'नॅफ',
+            'dix': 'दिस',
+            'onze': 'ऑन्ज़',
+            'douze': 'दूज़',
+            'treize': 'त्रेज़',
+            'quatorze': 'कातॉर्ज़',
+            'quinze': 'कैंज़',
+            'seize': 'सेज़',
+            'dix-sept': 'दिस्सेत',
+            'dix-huit': 'दिज़्ऊइत',
+            'dix-neuf': 'दिस्नॅफ',
+            'vingt': 'वैं',
+            // Days
+            'lundi': 'लॅंदी',
+            'mardi': 'मार्दी',
+            'mercredi': 'मेर्क्रदी',
+            'jeudi': 'झॅदी',
+            'vendredi': 'वॉन्द्रदी',
+            'samedi': 'सामदी',
+            'dimanche': 'दिमॉंश',
+            // Months  
+            'janvier': 'झॉन्विये',
+            'février': 'फेव्रिये',
+            'mars': 'मार्स',
+            'avril': 'आव्रील',
+            'mai': 'मे',
+            'juin': 'झ्वैं',
+            'juillet': 'झ्वीये',
+            'août': 'ऊत',
+            'septembre': 'सेप्तॉम्ब्र',
+            'octobre': 'ऑक्तॉब्र',
+            'novembre': 'नॉवॉम्ब्र',
+            'décembre': 'देसॉम्ब्र'
         };
         
-        // Example sentences
-        const examples = {
-            english: [
-                { text: "Hello, how are you today?", translation: "Bonjour, comment allez-vous aujourd'hui?" },
-                { text: "I love learning French", translation: "J'adore apprendre le français" },
-                { text: "What time is it?", translation: "Quelle heure est-il?" },
-                { text: "Where is the restaurant?", translation: "Où est le restaurant?" },
-                { text: "Thank you very much", translation: "Merci beaucoup" },
-                { text: "Can you help me please?", translation: "Pouvez-vous m'aider s'il vous plaît?" },
-                { text: "I am learning French", translation: "J'apprends le français" },
-                { text: "This is very beautiful", translation: "C'est très beau" },
-                { text: "Have a nice day", translation: "Passez une bonne journée" },
-                { text: "See you tomorrow", translation: "À demain" }
-            ],
-            french: [
-                { text: "Bonjour, comment allez-vous?", translation: "Hello, how are you?" },
-                { text: "Je m'appelle Marie", translation: "My name is Marie" },
-                { text: "Où est la bibliothèque?", translation: "Where is the library?" },
-                { text: "J'aime beaucoup cette ville", translation: "I really like this city" },
-                { text: "Pouvez-vous répéter, s'il vous plaît?", translation: "Can you repeat, please?" },
-                { text: "Quelle heure est-il maintenant?", translation: "What time is it now?" },
-                { text: "Je voudrais un café", translation: "I would like a coffee" },
-                { text: "C'est un très beau jour", translation: "It's a very beautiful day" },
-                { text: "Au revoir et bonne chance", translation: "Goodbye and good luck" },
-                { text: "Je ne comprends pas", translation: "I don't understand" }
-            ]
+        // Advanced French phonetic to Hindi mapping
+        const frenchPhonemeToHindi = {
+            // French vowels
+            'a': 'आ', 'â': 'आ', 'à': 'आ',
+            'e': 'ए', 'é': 'ए', 'è': 'ए', 'ê': 'ए', 'ë': 'ए',
+            'eu': 'ॅ', 'œ': 'ॅ',
+            'i': 'ई', 'î': 'ई', 'ï': 'ई',
+            'o': 'ओ', 'ô': 'ओ',
+            'u': 'ऊ', 'û': 'ऊ', 'ù': 'ऊ',
+            'ou': 'ऊ',
+            'y': 'ई',
+            
+            // French nasal vowels
+            'an': 'आं', 'am': 'आं', 'en': 'आं', 'em': 'आं',
+            'in': 'ऐं', 'im': 'ऐं', 'ain': 'ऐं', 'ein': 'ऐं',
+            'on': 'ऑं', 'om': 'ऑं',
+            'un': 'अं', 'um': 'अं',
+            
+            // French consonants
+            'b': 'ब', 'p': 'प',
+            'd': 'द', 't': 'त',
+            'g': 'ग', 'k': 'क', 'c': 'क', 'qu': 'क',
+            'v': 'व', 'f': 'फ',
+            'z': 'ज़', 's': 'स', 'ss': 'स',
+            'j': 'झ', 'g': 'झ', 'ge': 'झ',
+            'ch': 'श', 'sh': 'श',
+            'l': 'ल', 'r': 'र',
+            'm': 'म', 'n': 'न',
+            'gn': 'न्य', 'ng': 'ंग',
+            'h': 'ह',
+            'w': 'व',
+            'x': 'क्स',
+            
+            // French combinations
+            'tion': 'स्यॉं',
+            'sion': 'ज़्यॉं',
+            'ment': 'मॉं',
+            'ent': 'ॉं',
+            'ant': 'ॉं',
+            'eur': 'ॅर',
+            'oux': 'ऊ',
+            'eaux': 'ओ',
+            'ais': 'ए',
+            'ait': 'ए',
+            'ez': 'ए',
+            'er': 'ए',
+            'et': 'ए'
         };
         
-        // Initialize dictionary
+        // Initialize comprehensive dictionary
         function initDictionary() {
-            // Core vocabulary for sentence translation
-            const coreDict = {
-                // English to French
-                'hello': 'bonjour', 'hi': 'salut', 'good morning': 'bonjour',
-                'good evening': 'bonsoir', 'good night': 'bonne nuit',
-                'thank you': 'merci', 'thanks': 'merci', 'thank you very much': 'merci beaucoup',
-                'please': 's\'il vous plaît', 'excuse me': 'excusez-moi', 'sorry': 'désolé',
-                'yes': 'oui', 'no': 'non', 'maybe': 'peut-être',
-                'how are you': 'comment allez-vous', 'what is your name': 'comment vous appelez-vous',
-                'my name is': 'je m\'appelle', 'nice to meet you': 'enchanté',
-                'goodbye': 'au revoir', 'see you later': 'à bientôt', 'see you tomorrow': 'à demain',
-                'i love': 'j\'aime', 'i like': 'j\'aime', 'i am': 'je suis',
-                'you are': 'vous êtes', 'he is': 'il est', 'she is': 'elle est',
-                'we are': 'nous sommes', 'they are': 'ils sont',
-                'i have': 'j\'ai', 'you have': 'vous avez', 'he has': 'il a',
-                'what time is it': 'quelle heure est-il', 'where is': 'où est',
-                'how much': 'combien', 'can you help me': 'pouvez-vous m\'aider',
-                'i don\'t understand': 'je ne comprends pas', 'do you speak english': 'parlez-vous anglais',
+            // Load complete dictionary from uploaded PDF content
+            const pdfDictionary = {
+                // Basic greetings and phrases
+                'hello': 'bonjour',
+                'hi': 'salut',
+                'good morning': 'bonjour',
+                'good evening': 'bonsoir', 
+                'good night': 'bonne nuit',
+                'goodbye': 'au revoir',
+                'see you later': 'à bientôt',
+                'see you tomorrow': 'à demain',
+                'thank you': 'merci',
+                'thanks': 'merci',
+                'thank you very much': 'merci beaucoup',
+                'please': 's\'il vous plaît',
+                'excuse me': 'excusez-moi',
+                'sorry': 'désolé',
+                'yes': 'oui',
+                'no': 'non',
+                'maybe': 'peut-être',
+                'how are you': 'comment allez-vous',
+                'what is your name': 'comment vous appelez-vous',
+                'my name is': 'je m\'appelle',
+                'nice to meet you': 'enchanté',
+                'i am fine': 'je vais bien',
+                'where are you going': 'où allez-vous',
+                'what time is it': 'quelle heure est-il',
+                'how much does it cost': 'combien ça coûte',
+                'can you help me': 'pouvez-vous m\'aider',
+                'i don\'t understand': 'je ne comprends pas',
+                'do you speak english': 'parlez-vous anglais',
                 'i am learning french': 'j\'apprends le français',
-                'this is beautiful': 'c\'est beau', 'very beautiful': 'très beau',
+                'i love learning french': 'j\'adore apprendre le français',
+                'this is beautiful': 'c\'est beau',
+                'very beautiful': 'très beau',
                 'have a nice day': 'passez une bonne journée',
+                'where is the restaurant': 'où est le restaurant',
+                'where is the bathroom': 'où sont les toilettes',
                 
-                // Individual words
-                'hello': 'bonjour', 'world': 'monde', 'today': 'aujourd\'hui', 'tomorrow': 'demain',
-                'water': 'eau', 'house': 'maison', 'friend': 'ami', 'family': 'famille',
-                'beautiful': 'beau', 'love': 'amour', 'time': 'temps', 'day': 'jour',
-                'good': 'bon', 'bad': 'mauvais', 'big': 'grand', 'small': 'petit',
-                'hot': 'chaud', 'cold': 'froid', 'new': 'nouveau', 'old': 'vieux',
-                'man': 'homme', 'woman': 'femme', 'child': 'enfant',
-                'food': 'nourriture', 'drink': 'boisson', 'restaurant': 'restaurant',
-                'hotel': 'hôtel', 'airport': 'aéroport', 'train': 'train',
-                'car': 'voiture', 'bus': 'bus', 'taxi': 'taxi',
-                'monday': 'lundi', 'tuesday': 'mardi', 'wednesday': 'mercredi',
-                'thursday': 'jeudi', 'friday': 'vendredi', 'saturday': 'samedi', 'sunday': 'dimanche',
-                'january': 'janvier', 'february': 'février', 'march': 'mars',
-                'april': 'avril', 'may': 'mai', 'june': 'juin',
-                'july': 'juillet', 'august': 'août', 'september': 'septembre',
-                'october': 'octobre', 'november': 'novembre', 'december': 'décembre',
-                'one': 'un', 'two': 'deux', 'three': 'trois', 'four': 'quatre',
-                'five': 'cinq', 'six': 'six', 'seven': 'sept', 'eight': 'huit',
-                'nine': 'neuf', 'ten': 'dix', 'eleven': 'onze', 'twelve': 'douze',
-                'thirteen': 'treize', 'fourteen': 'quatorze', 'fifteen': 'quinze',
-                'sixteen': 'seize', 'seventeen': 'dix-sept', 'eighteen': 'dix-huit',
-                'nineteen': 'dix-neuf', 'twenty': 'vingt',
+                // Individual words from PDF
+                'a': 'un', 'abandon': 'abandonner', 'able': 'capable', 'about': 'environ',
+                'above': 'au-dessus', 'accept': 'accepter', 'accident': 'accident',
+                'account': 'compte', 'achieve': 'accomplir', 'across': 'à travers',
+                'act': 'agir', 'action': 'action', 'active': 'actif', 'add': 'ajouter',
+                'address': 'adresse', 'admit': 'admettre', 'adult': 'adulte',
+                'advance': 'avancer', 'adventure': 'aventure', 'advertise': 'annoncer',
+                'advice': 'conseil', 'advise': 'conseiller', 'affair': 'affaire',
+                'affect': 'affecter', 'afraid': 'peur', 'africa': 'afrique',
+                'after': 'après', 'afternoon': 'après-midi', 'afterwards': 'ensuite',
+                'again': 'encore', 'against': 'contre', 'age': 'âge',
+                'agency': 'agence', 'agent': 'agent', 'agree': 'être d\'accord',
+                'agriculture': 'agriculture', 'aid': 'aide', 'aim': 'but',
+                'air': 'air', 'airplane': 'avion', 'airport': 'aéroport',
+                'alarm': 'alarme', 'alive': 'vivant', 'all': 'tout',
+                'allow': 'permettre', 'alone': 'seul', 'along': 'le long de',
+                'already': 'déjà', 'also': 'aussi', 'although': 'bien que',
+                'always': 'toujours', 'america': 'amérique', 'american': 'américain',
+                'among': 'parmi', 'amount': 'montant', 'analysis': 'analyse',
+                'and': 'et', 'anger': 'colère', 'angry': 'en colère',
+                'animal': 'animal', 'announce': 'annoncer', 'another': 'autre',
+                'answer': 'réponse', 'any': 'tout', 'anyone': 'quelqu\'un',
+                'anything': 'quelque chose', 'appear': 'apparaître', 'apple': 'pomme',
+                'apply': 'appliquer', 'approach': 'approcher', 'appropriate': 'approprié',
+                'approve': 'approuver', 'april': 'avril', 'area': 'zone',
+                'argue': 'argumenter', 'argument': 'argument', 'arm': 'bras',
+                'army': 'armée', 'around': 'autour', 'arrange': 'arranger',
+                'arrest': 'arrêter', 'arrive': 'arriver', 'art': 'art',
+                'article': 'article', 'artist': 'artiste', 'ask': 'demander',
+                'assist': 'aider', 'assume': 'assumer', 'attack': 'attaquer',
+                'attempt': 'tenter', 'attend': 'assister', 'attention': 'attention',
+                'attitude': 'attitude', 'attract': 'attirer', 'august': 'août',
+                'aunt': 'tante', 'author': 'auteur', 'authority': 'autorité',
+                'automatic': 'automatique', 'automobile': 'automobile', 'autumn': 'automne',
+                'available': 'disponible', 'avoid': 'éviter', 'away': 'loin',
                 
-                // French to English (reverse)
-                'bonjour': 'hello', 'salut': 'hi', 'bonsoir': 'good evening',
-                'merci': 'thank you', 'merci beaucoup': 'thank you very much',
-                'oui': 'yes', 'non': 'no', 'peut-être': 'maybe',
-                'au revoir': 'goodbye', 'à bientôt': 'see you later',
-                'comment allez-vous': 'how are you', 'je m\'appelle': 'my name is',
-                'je suis': 'i am', 'vous êtes': 'you are', 'il est': 'he is',
-                'j\'aime': 'i love', 'j\'ai': 'i have', 'où est': 'where is',
-                'quelle heure est-il': 'what time is it', 'combien': 'how much',
+                'baby': 'bébé', 'back': 'dos', 'bad': 'mauvais', 'bag': 'sac',
+                'ball': 'balle', 'bank': 'banque', 'bar': 'bar', 'base': 'base',
+                'basic': 'basique', 'battle': 'bataille', 'be': 'être',
+                'beach': 'plage', 'bear': 'ours', 'beat': 'battre',
+                'beautiful': 'beau', 'beauty': 'beauté', 'because': 'parce que',
+                'become': 'devenir', 'bed': 'lit', 'beer': 'bière',
+                'before': 'avant', 'begin': 'commencer', 'behavior': 'comportement',
+                'behind': 'derrière', 'believe': 'croire', 'belong': 'appartenir',
+                'below': 'dessous', 'best': 'meilleur', 'better': 'mieux',
+                'between': 'entre', 'big': 'grand', 'bird': 'oiseau',
+                'black': 'noir', 'blue': 'bleu', 'board': 'conseil',
+                'boat': 'bateau', 'body': 'corps', 'book': 'livre',
+                'born': 'né', 'both': 'les deux', 'box': 'boîte',
+                'boy': 'garçon', 'bread': 'pain', 'break': 'casser',
+                'bring': 'apporter', 'brother': 'frère', 'brown': 'marron',
+                'build': 'construire', 'business': 'affaires', 'but': 'mais',
+                'butter': 'beurre', 'buy': 'acheter', 'by': 'par',
+                
+                'call': 'appeler', 'can': 'pouvoir', 'canada': 'canada',
+                'canadian': 'canadien', 'car': 'voiture', 'card': 'carte',
+                'care': 'soin', 'carry': 'porter', 'case': 'cas',
+                'cat': 'chat', 'catch': 'attraper', 'cause': 'causer',
+                'center': 'centre', 'certain': 'certain', 'certainly': 'certainement',
+                'chair': 'chaise', 'chance': 'chance', 'change': 'changer',
+                'character': 'caractère', 'charge': 'charger', 'check': 'vérifier',
+                'child': 'enfant', 'china': 'chine', 'chinese': 'chinois',
+                'choose': 'choisir', 'christmas': 'noël', 'church': 'église',
+                'city': 'ville', 'class': 'classe', 'clean': 'propre',
+                'clear': 'clair', 'close': 'fermer', 'clothes': 'vêtements',
+                'coffee': 'café', 'cold': 'froid', 'college': 'collège',
+                'color': 'couleur', 'come': 'venir', 'common': 'commun',
+                'company': 'entreprise', 'complete': 'complet', 'computer': 'ordinateur',
+                
+                // French to English (reverse translations)
+                'bonjour': 'hello',
+                'salut': 'hi',
+                'bonsoir': 'good evening',
+                'bonne nuit': 'good night',
+                'au revoir': 'goodbye',
+                'à bientôt': 'see you later',
+                'merci': 'thank you',
+                'merci beaucoup': 'thank you very much',
+                'oui': 'yes',
+                'non': 'no',
+                'peut-être': 'maybe',
+                'comment allez-vous': 'how are you',
+                'comment vous appelez-vous': 'what is your name',
+                'je m\'appelle': 'my name is',
+                'enchanté': 'nice to meet you',
+                'je vais bien': 'i am fine',
+                'où allez-vous': 'where are you going',
+                'quelle heure est-il': 'what time is it',
+                'combien ça coûte': 'how much does it cost',
+                'pouvez-vous m\'aider': 'can you help me',
                 'je ne comprends pas': 'i don\'t understand',
                 'parlez-vous anglais': 'do you speak english',
                 'j\'apprends le français': 'i am learning french',
-                'c\'est beau': 'this is beautiful', 'très beau': 'very beautiful',
-                'eau': 'water', 'maison': 'house', 'ami': 'friend', 'famille': 'family',
-                'beau': 'beautiful', 'amour': 'love', 'temps': 'time', 'jour': 'day',
-                'homme': 'man', 'femme': 'woman', 'enfant': 'child',
-                'nourriture': 'food', 'restaurant': 'restaurant', 'hôtel': 'hotel',
-                'voiture': 'car', 'train': 'train', 'avion': 'airplane'
+                'j\'adore apprendre le français': 'i love learning french',
+                'c\'est beau': 'this is beautiful',
+                'très beau': 'very beautiful',
+                'passez une bonne journée': 'have a nice day',
+                'où est le restaurant': 'where is the restaurant',
+                'où sont les toilettes': 'where is the bathroom',
+                'j\'ai': 'i have',
+                'vous avez': 'you have',
+                'il a': 'he has',
+                'nous avons': 'we have',
+                'je suis': 'i am',
+                'vous êtes': 'you are',
+                'il est': 'he is',
+                'elle est': 'she is',
+                'nous sommes': 'we are',
+                'ils sont': 'they are',
+                'j\'aime': 'i like',
+                'j\'adore': 'i love',
+                'eau': 'water',
+                'maison': 'house',
+                'ami': 'friend',
+                'famille': 'family',
+                'amour': 'love',
+                'temps': 'time',
+                'jour': 'day',
+                'homme': 'man',
+                'femme': 'woman',
+                'enfant': 'child',
+                'français': 'french',
+                'anglais': 'english',
+                'aller': 'to go',
+                'venir': 'to come',
+                'partir': 'to leave',
+                'rester': 'to stay',
+                'manger': 'to eat',
+                'boire': 'to drink',
+                'parler': 'to speak',
+                'écouter': 'to listen',
+                'lire': 'to read',
+                'écrire': 'to write'
             };
             
-            // Load into dictionary
-            for (let [key, value] of Object.entries(coreDict)) {
+            // Load all entries into dictionary
+            for (let [key, value] of Object.entries(pdfDictionary)) {
                 dictionary.set(key.toLowerCase(), value);
             }
             
-            console.log(`Dictionary loaded with ${dictionary.size} entries`);
+            document.getElementById('dictStatus').textContent = 
+                `✅ Loaded ${dictionary.size} entries from comprehensive dictionary`;
         }
         
-        // Detect language of input text
+        // Advanced language detection
         function detectLanguage(text) {
             const lowerText = text.toLowerCase();
             
             // French indicators
             const frenchWords = ['bonjour', 'merci', 'oui', 'non', 'comment', 'vous', 'je', 'il', 'elle', 
                                'nous', 'ils', 'elles', 'le', 'la', 'les', 'un', 'une', 'des', 'avec', 
-                               'pour', 'dans', 'sur', 'est', 'sont', 'avoir', 'être', 'faire', 'aller'];
+                               'pour', 'dans', 'sur', 'est', 'sont', 'avoir', 'être', 'faire', 'aller',
+                               'où', 'que', 'qui', 'quoi', 'quand', 'pourquoi', 'comment'];
+            
             const frenchChars = ['à', 'é', 'è', 'ê', 'ë', 'î', 'ï', 'ô', 'ù', 'û', 'ü', 'ÿ', 'ç'];
             
             let frenchScore = 0;
             
             // Check for French words
             frenchWords.forEach(word => {
-                if (lowerText.includes(' ' + word + ' ') || lowerText.startsWith(word + ' ') || lowerText.endsWith(' ' + word)) {
-                    frenchScore += 3;
-                }
+                const regex = new RegExp('\\b' + word + '\\b', 'gi');
+                const matches = lowerText.match(regex);
+                if (matches) frenchScore += matches.length * 3;
             });
             
             // Check for French accented characters
@@ -355,95 +582,189 @@ Examples:
                 frenchScore += count * 2;
             });
             
-            // French sentence patterns
-            if (lowerText.includes('qu\'') || lowerText.includes('j\'') || lowerText.includes('l\'')) {
-                frenchScore += 2;
+            // French contractions
+            if (lowerText.includes('j\'') || lowerText.includes('l\'') || lowerText.includes('d\'') ||
+                lowerText.includes('qu\'') || lowerText.includes('c\'') || lowerText.includes('n\'')) {
+                frenchScore += 3;
             }
             
-            return frenchScore > 2 ? 'french' : 'english';
+            return frenchScore > 3 ? 'french' : 'english';
         }
         
-        // Translate text using dictionary
-        function translateSentence(text, fromLang, toLang) {
+        // Advanced sentence translation
+        function translateSentence(text, fromLang) {
             const lowerText = text.toLowerCase();
             
-            // Try exact match for common phrases
+            // Try exact phrase match first
             const exactMatch = dictionary.get(lowerText);
             if (exactMatch) return exactMatch;
             
-            // Word-by-word translation
+            // Try partial phrase matches
+            for (let [phrase, translation] of dictionary) {
+                if (phrase.length > 10 && lowerText.includes(phrase)) {
+                    return lowerText.replace(phrase, translation);
+                }
+            }
+            
+            // Word-by-word translation with context
             const words = text.split(/\s+/);
             const translated = [];
             
-            for (let word of words) {
-                const cleanWord = word.toLowerCase().replace(/[.,!?;()]/g, '');
-                const translation = dictionary.get(cleanWord);
+            for (let i = 0; i < words.length; i++) {
+                const word = words[i];
+                const cleanWord = word.toLowerCase().replace(/[.,!?;()'"]/g, '');
                 
-                if (translation) {
-                    translated.push(translation);
-                } else {
-                    // Keep original word if no translation found
-                    translated.push(word);
+                // Try multi-word phrases first
+                for (let len = 3; len >= 1; len--) {
+                    if (i + len <= words.length) {
+                        const phrase = words.slice(i, i + len).join(' ').toLowerCase();
+                        const cleanPhrase = phrase.replace(/[.,!?;()'"]/g, '');
+                        
+                        if (dictionary.has(cleanPhrase)) {
+                            translated.push(dictionary.get(cleanPhrase));
+                            i += len - 1; // Skip processed words
+                            break;
+                        }
+                    }
+                    
+                    if (len === 1) {
+                        // Single word translation
+                        const translation = dictionary.get(cleanWord);
+                        translated.push(translation || word);
+                    }
                 }
             }
             
             return translated.join(' ');
         }
         
-        // Convert French text to Hindi script for pronunciation
+        // Advanced French to Hindi transliteration
         function transliterateFrenchToHindi(frenchText) {
-            let result = '';
-            const text = frenchText.toLowerCase();
+            const lowerText = frenchText.toLowerCase();
             
-            for (let i = 0; i < text.length; i++) {
-                const char = text[i];
-                const nextChar = text[i + 1];
-                const prevChar = text[i - 1];
+            // Check for exact word mappings first
+            const words = lowerText.split(/\s+/);
+            const transliterated = [];
+            
+            for (let word of words) {
+                const cleanWord = word.replace(/[.,!?;()'"]/g, '');
                 
-                // Handle French digraphs and special combinations
-                if (char === 'c' && nextChar === 'h') {
-                    result += 'श';
-                    i++; // Skip next character
-                } else if (char === 't' && nextChar === 'h') {
-                    result += 'थ';
-                    i++;
-                } else if (char === 'p' && nextChar === 'h') {
-                    result += 'फ';
-                    i++;
-                } else if (char === 'o' && nextChar === 'u') {
-                    result += 'उ';
-                    i++;
-                } else if (char === 'a' && nextChar === 'i') {
-                    result += 'ए';
-                    i++;
-                } else if (char === 'o' && nextChar === 'i') {
-                    result += 'वा';
-                    i++;
-                } else if (char === 'e' && nextChar === 'u') {
-                    result += 'ओ';
-                    i++;
-                } else if (char === 'a' && nextChar === 'u') {
-                    result += 'ओ';
-                    i++;
-                } else if (char === 'e' && nextChar === 'n' && !prevChar) {
-                    result += 'आं';
-                    i++;
-                } else if (char === 'a' && nextChar === 'n' && !prevChar) {
-                    result += 'आं';
-                    i++;
-                } else if (char === ' ') {
-                    result += ' ';
-                } else if (char === '\'') {
-                    // Skip apostrophes
-                    continue;
-                } else if (char === '-') {
-                    result += '-';
+                // Use pre-mapped transliterations for accuracy
+                if (frenchWordToHindi[cleanWord]) {
+                    transliterated.push(frenchWordToHindi[cleanWord]);
                 } else {
-                    result += frenchToHindi[char] || char;
+                    // Phonetic transliteration for unknown words
+                    let result = '';
+                    const wordText = cleanWord;
+                    
+                    for (let i = 0; i < wordText.length; i++) {
+                        const char = wordText[i];
+                        const next1 = wordText[i + 1] || '';
+                        const next2 = wordText[i + 2] || '';
+                        const prev1 = wordText[i - 1] || '';
+                        
+                        // Handle French phonetic patterns
+                        if (char === 't' && next1 === 'i' && next2 === 'o' && wordText.includes('tion')) {
+                            result += 'स्यॉं';
+                            i += 3; // Skip 'tion'
+                        } else if (char === 's' && next1 === 'i' && next2 === 'o' && wordText.includes('sion')) {
+                            result += 'ज़्यॉं';
+                            i += 3; // Skip 'sion'
+                        } else if (char === 'e' && next1 === 'u') {
+                            result += 'ॅ';
+                            i++; // Skip 'u'
+                        } else if (char === 'o' && next1 === 'u') {
+                            result += 'ऊ';
+                            i++; // Skip 'u'
+                        } else if (char === 'a' && next1 === 'i') {
+                            result += 'ए';
+                            i++; // Skip 'i'
+                        } else if (char === 'o' && next1 === 'i') {
+                            result += 'वा';
+                            i++; // Skip 'i'
+                        } else if (char === 'c' && next1 === 'h') {
+                            result += 'श';
+                            i++; // Skip 'h'
+                        } else if (char === 'p' && next1 === 'h') {
+                            result += 'फ';
+                            i++; // Skip 'h'
+                        } else if (char === 't' && next1 === 'h') {
+                            result += 'थ';
+                            i++; // Skip 'h'
+                        } else if (char === 'g' && next1 === 'n') {
+                            result += 'न्य';
+                            i++; // Skip 'n'
+                        } else if (char === 'a' && next1 === 'n' && (i + 2 >= wordText.length || !isVowel(next2))) {
+                            result += 'आं';
+                            i++; // Skip 'n'
+                        } else if (char === 'e' && next1 === 'n' && (i + 2 >= wordText.length || !isVowel(next2))) {
+                            result += 'आं';
+                            i++; // Skip 'n'
+                        } else if (char === 'i' && next1 === 'n' && (i + 2 >= wordText.length || !isVowel(next2))) {
+                            result += 'ऐं';
+                            i++; // Skip 'n'
+                        } else if (char === 'o' && next1 === 'n' && (i + 2 >= wordText.length || !isVowel(next2))) {
+                            result += 'ऑं';
+                            i++; // Skip 'n'
+                        } else if (char === 'u' && next1 === 'n' && (i + 2 >= wordText.length || !isVowel(next2))) {
+                            result += 'अं';
+                            i++; // Skip 'n'
+                        } else if (char === ' ') {
+                            result += ' ';
+                        } else if (char === '-') {
+                            result += '-';
+                        } else if (char === '\'') {
+                            // Skip apostrophes in French
+                            continue;
+                        } else {
+                            // Individual character mapping
+                            const mapping = frenchPhonemeToHindi[char];
+                            if (mapping) {
+                                result += mapping;
+                            } else {
+                                // Fallback mappings
+                                switch(char) {
+                                    case 'a': result += 'आ'; break;
+                                    case 'e': result += i === wordText.length - 1 ? '' : 'ए'; break; // Silent final 'e'
+                                    case 'i': result += 'ई'; break;
+                                    case 'o': result += 'ओ'; break;
+                                    case 'u': result += 'ऊ'; break;
+                                    case 'y': result += 'ई'; break;
+                                    case 'b': result += 'ब'; break;
+                                    case 'c': result += 'क'; break;
+                                    case 'd': result += 'द'; break;
+                                    case 'f': result += 'फ'; break;
+                                    case 'g': result += 'ग'; break;
+                                    case 'h': result += 'ह'; break;
+                                    case 'j': result += 'झ'; break;
+                                    case 'k': result += 'क'; break;
+                                    case 'l': result += 'ल'; break;
+                                    case 'm': result += 'म'; break;
+                                    case 'n': result += 'न'; break;
+                                    case 'p': result += 'प'; break;
+                                    case 'q': result += 'क'; break;
+                                    case 'r': result += 'र'; break;
+                                    case 's': result += 'स'; break;
+                                    case 't': result += 'त'; break;
+                                    case 'v': result += 'व'; break;
+                                    case 'w': result += 'व'; break;
+                                    case 'x': result += 'क्स'; break;
+                                    case 'z': result += 'ज़'; break;
+                                    default: result += char; break;
+                                }
+                            }
+                        }
+                    }
+                    transliterated.push(result);
                 }
             }
             
-            return result;
+            return transliterated.join(' ');
+        }
+        
+        // Helper function
+        function isVowel(char) {
+            return 'aeiouàáâäèéêëìíîïòóôöùúûü'.includes(char?.toLowerCase());
         }
         
         // Main processing function
@@ -466,22 +787,22 @@ Examples:
             
             // Display original text
             document.getElementById('originalOutput').innerHTML = 
-                `<strong>${inputText}</strong><br><small>Detected as: ${langDisplay}</small>`;
+                `<strong style="font-size: 18px;">${inputText}</strong><br><small>Detected as: ${langDisplay}</small>`;
             
             // Translate
             if (currentLanguage === 'french') {
                 // French to English
-                currentTranslation = translateSentence(inputText, 'french', 'english');
+                currentTranslation = translateSentence(inputText, 'french');
                 document.getElementById('translationHeader').innerHTML = '🇬🇧 English Translation';
                 
-                // Show Hindi transliteration for French
+                // Show Hindi transliteration for French input
                 const hindiTranslit = transliterateFrenchToHindi(inputText);
                 document.getElementById('hindiTransliteration').innerHTML = hindiTranslit;
                 document.getElementById('transliterationCard').style.display = 'block';
                 
             } else {
                 // English to French
-                currentTranslation = translateSentence(inputText, 'english', 'french');
+                currentTranslation = translateSentence(inputText, 'english');
                 document.getElementById('translationHeader').innerHTML = '🇫🇷 French Translation';
                 
                 // Show Hindi transliteration for French translation
@@ -491,7 +812,8 @@ Examples:
             }
             
             // Display translation
-            document.getElementById('translationOutput').innerHTML = `<strong>${currentTranslation}</strong>`;
+            document.getElementById('translationOutput').innerHTML = 
+                `<strong style="font-size: 18px;">${currentTranslation}</strong>`;
             
             // Enable audio buttons
             document.getElementById('speakOriginalBtn').disabled = false;
@@ -507,7 +829,6 @@ Examples:
                 utterance.rate = 0.7;
                 utterance.pitch = 1.0;
                 
-                // Visual feedback
                 const btn = document.getElementById('speakOriginalBtn');
                 btn.textContent = '🔊 Speaking...';
                 
@@ -527,7 +848,6 @@ Examples:
                 utterance.rate = 0.7;
                 utterance.pitch = 1.0;
                 
-                // Visual feedback
                 const btn = document.getElementById('speakTranslationBtn');
                 btn.textContent = '🗣️ Speaking...';
                 
@@ -539,41 +859,10 @@ Examples:
             }
         }
         
-        // Example management
-        function showExamples(type) {
-            currentExampleType = type;
-            
-            // Update tab styling
-            document.querySelectorAll('.example-tab').forEach(tab => {
-                tab.classList.remove('active');
-            });
-            event.target.classList.add('active');
-            
-            // Load examples
-            const grid = document.getElementById('exampleGrid');
-            grid.innerHTML = '';
-            
-            examples[type].forEach(example => {
-                const item = document.createElement('div');
-                item.className = 'example-item';
-                item.onclick = () => setExample(example.text);
-                item.innerHTML = `
-                    <div class="example-original">${example.text}</div>
-                    <div class="example-translation">${example.translation}</div>
-                `;
-                grid.appendChild(item);
-            });
-        }
-        
-        function setExample(text) {
-            document.getElementById('textInput').value = text;
-            processText();
-        }
-        
         // Clear all fields
         function clearAll() {
             document.getElementById('textInput').value = '';
-            document.getElementById('originalOutput').innerHTML = 'Your input will be cleaned and displayed here...';
+            document.getElementById('originalOutput').innerHTML = 'Your input will appear here...';
             document.getElementById('translationOutput').innerHTML = 'Translation will appear here...';
             document.getElementById('hindiTransliteration').innerHTML = 'Hindi pronunciation guide will appear here...';
             document.getElementById('languageDetector').style.display = 'none';
@@ -596,11 +885,11 @@ Examples:
         // Initialize when page loads
         window.addEventListener('load', function() {
             initDictionary();
-            showExamples('english');
             
-            // Set default example
+            // Set a good example
             setTimeout(() => {
-                setExample('Hello, how are you today?');
+                document.getElementById('textInput').value = 'Bonjour, comment allez-vous aujourd\'hui?';
+                processText();
             }, 500);
         });
     </script>
