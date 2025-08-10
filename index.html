@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>French Learning Translator with PDF Dictionary</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <title>Bilingual Translator with Hindi Pronunciation</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { 
@@ -13,7 +12,7 @@
             min-height: 100vh; padding: 20px;
         }
         .container { 
-            max-width: 1000px; margin: 0 auto; background: white; 
+            max-width: 1100px; margin: 0 auto; background: white; 
             border-radius: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.1);
         }
         .header {
@@ -23,50 +22,50 @@
         .header h1 { font-size: 2.5em; margin-bottom: 10px; }
         .main-content { padding: 40px; }
         
-        .status-panel {
+        .language-detector {
+            background: #e3f2fd; border-radius: 15px; padding: 20px; margin-bottom: 30px;
+            text-align: center; border: 2px solid #1976d2;
+        }
+        .detected-lang {
+            font-size: 24px; font-weight: bold; color: #1976d2; margin: 10px 0;
+        }
+        
+        .input-section {
             background: #f8f9fa; border-radius: 15px; padding: 25px; margin-bottom: 30px;
             border: 2px solid #dee2e6;
         }
-        .status-item {
-            background: white; padding: 15px; border-radius: 10px; text-align: center;
-            margin: 10px 0; border: 2px solid #e9ecef; transition: all 0.3s;
-        }
-        .status-loading { border-color: #ffc107; background: #fff3cd; }
-        .status-success { border-color: #28a745; background: #d4edda; }
-        .status-error { border-color: #dc3545; background: #f8d7da; }
-        
-        .progress-bar {
-            width: 100%; height: 8px; background: #e9ecef; border-radius: 4px; 
-            overflow: hidden; margin: 15px 0;
-        }
-        .progress-fill {
-            height: 100%; background: linear-gradient(90deg, #28a745, #20c997);
-            width: 0%; transition: width 0.5s ease;
-        }
-        
-        .translator-section {
-            display: grid; grid-template-columns: 1fr auto 1fr auto 1fr; 
-            gap: 20px; margin: 30px 0; align-items: start;
-        }
-        .lang-card {
-            background: #f8f9fa; border: 2px solid #dee2e6; border-radius: 15px; 
-            padding: 20px; min-height: 200px;
-        }
-        .lang-header {
-            font-size: 18px; font-weight: bold; color: #495057; margin-bottom: 15px;
+        .input-header {
+            font-size: 20px; font-weight: bold; color: #495057; margin-bottom: 15px;
             display: flex; align-items: center; gap: 10px;
         }
-        .lang-card textarea, .lang-output {
-            width: 100%; height: 140px; border: none; background: transparent;
-            font-size: 16px; resize: none; outline: none; line-height: 1.5;
+        .input-textarea {
+            width: 100%; height: 120px; border: 2px solid #dee2e6; border-radius: 10px;
+            padding: 15px; font-size: 16px; resize: vertical; outline: none;
+            transition: border-color 0.3s;
         }
-        .lang-output { overflow-y: auto; color: #333; }
-        .transliteration {
-            margin-top: 10px; padding: 10px; background: rgba(102, 126, 234, 0.1);
-            border-radius: 8px; font-style: italic; color: #6c757d; font-size: 14px;
-        }
+        .input-textarea:focus { border-color: #667eea; }
         
-        .arrow { font-size: 30px; color: #667eea; align-self: center; }
+        .results-grid {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 25px; margin-bottom: 30px;
+        }
+        .result-card {
+            background: #f8f9fa; border: 2px solid #dee2e6; border-radius: 15px; 
+            padding: 20px; min-height: 180px;
+        }
+        .result-header {
+            font-size: 18px; font-weight: bold; margin-bottom: 15px;
+            display: flex; align-items: center; gap: 10px;
+        }
+        .result-content {
+            font-size: 16px; line-height: 1.6; color: #333; min-height: 100px;
+        }
+        .transliteration-card {
+            background: #fff3cd; border: 2px solid #ffc107; border-radius: 15px;
+            padding: 20px; margin-bottom: 30px;
+        }
+        .transliteration-content {
+            font-size: 20px; line-height: 1.8; color: #856404; font-weight: 500;
+        }
         
         .controls {
             display: flex; justify-content: center; gap: 15px; margin: 30px 0; flex-wrap: wrap;
@@ -77,125 +76,140 @@
         }
         .btn-primary { background: linear-gradient(135deg, #667eea, #764ba2); color: white; }
         .btn-success { background: linear-gradient(135deg, #28a745, #20c997); color: white; }
+        .btn-warning { background: linear-gradient(135deg, #ffc107, #ff8f00); color: white; }
         .btn:hover { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
         .btn:disabled { background: #6c757d; transform: none; box-shadow: none; cursor: not-allowed; }
         
-        .dictionary-stats {
-            background: #fff3cd; border-radius: 15px; padding: 25px; margin-top: 30px;
-            border: 2px solid #ffeaa7;
+        .examples {
+            background: #e8f5e8; border-radius: 15px; padding: 20px; margin-top: 20px;
         }
-        .stats-grid {
-            display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;
+        .example-tabs {
+            display: flex; gap: 10px; margin-bottom: 15px; justify-content: center;
         }
-        .stat-card {
-            background: white; padding: 20px; border-radius: 10px; text-align: center;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        .example-tab {
+            padding: 8px 16px; border-radius: 20px; cursor: pointer; font-weight: bold;
+            transition: all 0.3s;
         }
-        .stat-number { font-size: 28px; font-weight: bold; color: #667eea; }
-        .stat-label { color: #6c757d; margin-top: 8px; }
+        .example-tab.active { background: #28a745; color: white; }
+        .example-tab:not(.active) { background: white; color: #28a745; border: 2px solid #28a745; }
+        .example-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 10px;
+        }
+        .example-item {
+            background: white; padding: 10px 15px; border-radius: 8px; cursor: pointer;
+            transition: all 0.2s; border: 2px solid transparent; text-align: left;
+        }
+        .example-item:hover {
+            border-color: #28a745; transform: translateY(-2px);
+        }
+        .example-original { font-weight: bold; color: #333; }
+        .example-translation { font-size: 14px; color: #666; margin-top: 5px; }
         
         @media (max-width: 768px) {
-            .translator-section { grid-template-columns: 1fr; }
-            .arrow { transform: rotate(90deg); justify-self: center; }
+            .results-grid { grid-template-columns: 1fr; }
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>📚 French Learning Translator</h1>
-            <p>English ↔ French ↔ Hindi with Real PDF Dictionary</p>
+            <h1>🗣️ Bilingual Translator</h1>
+            <p>English ↔ French with Hindi Pronunciation Guide</p>
         </div>
         
         <div class="main-content">
-            <!-- Status Panel -->
-            <div class="status-panel">
-                <h3 style="text-align: center; margin-bottom: 20px;">📖 Dictionary Loading Status</h3>
-                <div class="progress-bar">
-                    <div class="progress-fill" id="progressBar"></div>
+            <!-- Language Detection -->
+            <div class="language-detector" id="languageDetector" style="display: none;">
+                <div style="font-size: 16px; margin-bottom: 10px;">🔍 Detected Language:</div>
+                <div class="detected-lang" id="detectedLang">English 🇬🇧</div>
+            </div>
+            
+            <!-- Input Section -->
+            <div class="input-section">
+                <div class="input-header">
+                    💬 Enter English or French Text
                 </div>
-                <div class="status-item status-loading" id="dictionaryStatus">
-                    📖 Loading English-French Dictionary...<br>
-                    <small>Processing PDF content</small>
+                <textarea id="textInput" class="input-textarea" 
+                          placeholder="Type a sentence in English or French... 
+Examples: 
+- Hello, how are you today?
+- Bonjour, comment allez-vous aujourd'hui?
+- I love learning French
+- J'adore apprendre l'anglais"></textarea>
+            </div>
+            
+            <!-- Results -->
+            <div class="results-grid">
+                <div class="result-card">
+                    <div class="result-header" id="translationHeader">
+                        🔄 Translation
+                    </div>
+                    <div class="result-content" id="translationOutput">
+                        Translation will appear here...
+                    </div>
+                </div>
+                
+                <div class="result-card">
+                    <div class="result-header">
+                        🎯 Original Text
+                    </div>
+                    <div class="result-content" id="originalOutput">
+                        Your input will be cleaned and displayed here...
+                    </div>
                 </div>
             </div>
             
-            <!-- Translation Interface -->
-            <div class="translator-section">
-                <div class="lang-card">
-                    <div class="lang-header">🇬🇧 English</div>
-                    <textarea id="englishInput" placeholder="Type English text here..." 
-                              spellcheck="false">hello world</textarea>
+            <!-- Hindi Transliteration -->
+            <div class="transliteration-card" id="transliterationCard" style="display: none;">
+                <div class="result-header" style="color: #856404;">
+                    🇮🇳 French Pronunciation in Hindi Script
                 </div>
-                
-                <div class="arrow">→</div>
-                
-                <div class="lang-card">
-                    <div class="lang-header">🇫🇷 French</div>
-                    <div class="lang-output" id="frenchOutput">Translation will appear here...</div>
-                    <div class="transliteration" id="frenchTranslit" style="display:none;"></div>
-                </div>
-                
-                <div class="arrow">→</div>
-                
-                <div class="lang-card">
-                    <div class="lang-header">🇮🇳 Hindi Pronunciation</div>
-                    <div class="lang-output" id="hindiOutput">Hindi pronunciation will appear here...</div>
-                    <div class="transliteration" id="hindiTranslit" style="display:none;"></div>
+                <div class="transliteration-content" id="hindiTransliteration">
+                    Hindi pronunciation guide will appear here...
                 </div>
             </div>
             
             <!-- Controls -->
             <div class="controls">
-                <button class="btn btn-primary" onclick="translateText()" id="translateBtn" disabled>
-                    ✨ Translate
+                <button class="btn btn-primary" onclick="processText()" id="processBtn">
+                    ✨ Translate & Analyze
                 </button>
-                <button class="btn btn-success" onclick="speakFrench()" id="frenchSpeakBtn" disabled>
-                    🔊 Speak French
+                <button class="btn btn-success" onclick="speakOriginal()" id="speakOriginalBtn" disabled>
+                    🔊 Speak Original
                 </button>
-                <button class="btn btn-success" onclick="speakHindi()" id="hindiSpeakBtn" disabled>
-                    🗣️ Speak Hindi
+                <button class="btn btn-warning" onclick="speakTranslation()" id="speakTranslationBtn" disabled>
+                    🗣️ Speak Translation
                 </button>
                 <button class="btn" onclick="clearAll()" style="background: #6c757d; color: white;">
-                    🗑️ Clear
+                    🗑️ Clear All
                 </button>
             </div>
             
-            <!-- Dictionary Statistics -->
-            <div class="dictionary-stats" id="statsSection" style="display:none;">
-                <h3 style="text-align: center; margin-bottom: 20px;">📊 Dictionary Statistics</h3>
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="stat-number" id="totalWords">0</div>
-                        <div class="stat-label">Total Words</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-number" id="processedPages">0</div>
-                        <div class="stat-label">PDF Pages Processed</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-number" id="transliterations">0</div>
-                        <div class="stat-label">Hindi Transliterations</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-number" id="coverage">85%</div>
-                        <div class="stat-label">Dictionary Coverage</div>
-                    </div>
+            <!-- Examples -->
+            <div class="examples">
+                <h3 style="color: #28a745; margin-bottom: 15px; text-align: center;">💡 Try These Examples:</h3>
+                <div class="example-tabs">
+                    <div class="example-tab active" onclick="showExamples('english')">English Sentences</div>
+                    <div class="example-tab" onclick="showExamples('french')">French Sentences</div>
+                </div>
+                <div class="example-grid" id="exampleGrid">
+                    <!-- Examples will be populated by JavaScript -->
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        // Dictionary storage
+        // Comprehensive bilingual dictionary
         const dictionary = new Map();
-        let currentFrenchText = '';
-        let currentHindiText = '';
-        let isLoaded = false;
+        let currentOriginalText = '';
+        let currentTranslation = '';
+        let currentLanguage = '';
+        let currentExampleType = 'english';
         
-        // French to Hindi transliteration mapping
+        // French pronunciation to Hindi transliteration
         const frenchToHindi = {
-            // Vowels with accents
+            // Vowels with French accents
             'à': 'आ', 'á': 'आ', 'â': 'आ', 'ä': 'आ',
             'è': 'ए', 'é': 'ए', 'ê': 'ए', 'ë': 'ए',
             'ì': 'इ', 'í': 'इ', 'î': 'ई', 'ï': 'इ',
@@ -210,910 +224,191 @@
             'b': 'ब', 'c': 'क', 'd': 'द', 'f': 'फ', 'g': 'ग',
             'h': 'ह', 'j': 'ज', 'k': 'क', 'l': 'ल', 'm': 'म',
             'n': 'न', 'p': 'प', 'q': 'क', 'r': 'र', 's': 'स',
-            't': 'त', 'v': 'व', 'w': 'व', 'x': 'क्स', 'y': 'य', 'z': 'ज़',
-            
-            // French combinations
-            'ch': 'श', 'th': 'थ', 'ph': 'फ', 'ou': 'उ', 'ai': 'ए', 'oi': 'वा'
+            't': 'त', 'v': 'व', 'w': 'व', 'x': 'क्स', 'y': 'य', 'z': 'ज़'
         };
         
-        // Initialize the application
-        async function initApp() {
-            updateProgress(10);
-            updateStatus('loading', '📖 Loading English-French Dictionary...<br><small>Processing PDF content</small>');
+        // Example sentences
+        const examples = {
+            english: [
+                { text: "Hello, how are you today?", translation: "Bonjour, comment allez-vous aujourd'hui?" },
+                { text: "I love learning French", translation: "J'adore apprendre le français" },
+                { text: "What time is it?", translation: "Quelle heure est-il?" },
+                { text: "Where is the restaurant?", translation: "Où est le restaurant?" },
+                { text: "Thank you very much", translation: "Merci beaucoup" },
+                { text: "Can you help me please?", translation: "Pouvez-vous m'aider s'il vous plaît?" },
+                { text: "I am learning French", translation: "J'apprends le français" },
+                { text: "This is very beautiful", translation: "C'est très beau" },
+                { text: "Have a nice day", translation: "Passez une bonne journée" },
+                { text: "See you tomorrow", translation: "À demain" }
+            ],
+            french: [
+                { text: "Bonjour, comment allez-vous?", translation: "Hello, how are you?" },
+                { text: "Je m'appelle Marie", translation: "My name is Marie" },
+                { text: "Où est la bibliothèque?", translation: "Where is the library?" },
+                { text: "J'aime beaucoup cette ville", translation: "I really like this city" },
+                { text: "Pouvez-vous répéter, s'il vous plaît?", translation: "Can you repeat, please?" },
+                { text: "Quelle heure est-il maintenant?", translation: "What time is it now?" },
+                { text: "Je voudrais un café", translation: "I would like a coffee" },
+                { text: "C'est un très beau jour", translation: "It's a very beautiful day" },
+                { text: "Au revoir et bonne chance", translation: "Goodbye and good luck" },
+                { text: "Je ne comprends pas", translation: "I don't understand" }
+            ]
+        };
+        
+        // Initialize dictionary
+        function initDictionary() {
+            // Core vocabulary for sentence translation
+            const coreDict = {
+                // English to French
+                'hello': 'bonjour', 'hi': 'salut', 'good morning': 'bonjour',
+                'good evening': 'bonsoir', 'good night': 'bonne nuit',
+                'thank you': 'merci', 'thanks': 'merci', 'thank you very much': 'merci beaucoup',
+                'please': 's\'il vous plaît', 'excuse me': 'excusez-moi', 'sorry': 'désolé',
+                'yes': 'oui', 'no': 'non', 'maybe': 'peut-être',
+                'how are you': 'comment allez-vous', 'what is your name': 'comment vous appelez-vous',
+                'my name is': 'je m\'appelle', 'nice to meet you': 'enchanté',
+                'goodbye': 'au revoir', 'see you later': 'à bientôt', 'see you tomorrow': 'à demain',
+                'i love': 'j\'aime', 'i like': 'j\'aime', 'i am': 'je suis',
+                'you are': 'vous êtes', 'he is': 'il est', 'she is': 'elle est',
+                'we are': 'nous sommes', 'they are': 'ils sont',
+                'i have': 'j\'ai', 'you have': 'vous avez', 'he has': 'il a',
+                'what time is it': 'quelle heure est-il', 'where is': 'où est',
+                'how much': 'combien', 'can you help me': 'pouvez-vous m\'aider',
+                'i don\'t understand': 'je ne comprends pas', 'do you speak english': 'parlez-vous anglais',
+                'i am learning french': 'j\'apprends le français',
+                'this is beautiful': 'c\'est beau', 'very beautiful': 'très beau',
+                'have a nice day': 'passez une bonne journée',
+                
+                // Individual words
+                'hello': 'bonjour', 'world': 'monde', 'today': 'aujourd\'hui', 'tomorrow': 'demain',
+                'water': 'eau', 'house': 'maison', 'friend': 'ami', 'family': 'famille',
+                'beautiful': 'beau', 'love': 'amour', 'time': 'temps', 'day': 'jour',
+                'good': 'bon', 'bad': 'mauvais', 'big': 'grand', 'small': 'petit',
+                'hot': 'chaud', 'cold': 'froid', 'new': 'nouveau', 'old': 'vieux',
+                'man': 'homme', 'woman': 'femme', 'child': 'enfant',
+                'food': 'nourriture', 'drink': 'boisson', 'restaurant': 'restaurant',
+                'hotel': 'hôtel', 'airport': 'aéroport', 'train': 'train',
+                'car': 'voiture', 'bus': 'bus', 'taxi': 'taxi',
+                'monday': 'lundi', 'tuesday': 'mardi', 'wednesday': 'mercredi',
+                'thursday': 'jeudi', 'friday': 'vendredi', 'saturday': 'samedi', 'sunday': 'dimanche',
+                'january': 'janvier', 'february': 'février', 'march': 'mars',
+                'april': 'avril', 'may': 'mai', 'june': 'juin',
+                'july': 'juillet', 'august': 'août', 'september': 'septembre',
+                'october': 'octobre', 'november': 'novembre', 'december': 'décembre',
+                'one': 'un', 'two': 'deux', 'three': 'trois', 'four': 'quatre',
+                'five': 'cinq', 'six': 'six', 'seven': 'sept', 'eight': 'huit',
+                'nine': 'neuf', 'ten': 'dix', 'eleven': 'onze', 'twelve': 'douze',
+                'thirteen': 'treize', 'fourteen': 'quatorze', 'fifteen': 'quinze',
+                'sixteen': 'seize', 'seventeen': 'dix-sept', 'eighteen': 'dix-huit',
+                'nineteen': 'dix-neuf', 'twenty': 'vingt',
+                
+                // French to English (reverse)
+                'bonjour': 'hello', 'salut': 'hi', 'bonsoir': 'good evening',
+                'merci': 'thank you', 'merci beaucoup': 'thank you very much',
+                'oui': 'yes', 'non': 'no', 'peut-être': 'maybe',
+                'au revoir': 'goodbye', 'à bientôt': 'see you later',
+                'comment allez-vous': 'how are you', 'je m\'appelle': 'my name is',
+                'je suis': 'i am', 'vous êtes': 'you are', 'il est': 'he is',
+                'j\'aime': 'i love', 'j\'ai': 'i have', 'où est': 'where is',
+                'quelle heure est-il': 'what time is it', 'combien': 'how much',
+                'je ne comprends pas': 'i don\'t understand',
+                'parlez-vous anglais': 'do you speak english',
+                'j\'apprends le français': 'i am learning french',
+                'c\'est beau': 'this is beautiful', 'très beau': 'very beautiful',
+                'eau': 'water', 'maison': 'house', 'ami': 'friend', 'famille': 'family',
+                'beau': 'beautiful', 'amour': 'love', 'temps': 'time', 'jour': 'day',
+                'homme': 'man', 'femme': 'woman', 'enfant': 'child',
+                'nourriture': 'food', 'restaurant': 'restaurant', 'hôtel': 'hotel',
+                'voiture': 'car', 'train': 'train', 'avion': 'airplane'
+            };
             
-            try {
-                // Try to load the actual PDF
-                await loadPDFDictionary();
-            } catch (error) {
-                console.error('PDF loading failed:', error);
-                // Fallback to extracted content
-                await loadExtractedDictionary();
+            // Load into dictionary
+            for (let [key, value] of Object.entries(coreDict)) {
+                dictionary.set(key.toLowerCase(), value);
             }
+            
+            console.log(`Dictionary loaded with ${dictionary.size} entries`);
         }
         
-        // Load dictionary from the uploaded PDF
-        async function loadPDFDictionary() {
-            try {
-                updateProgress(20);
-                const response = await fetch('./english-french-dictionary.pdf');
-                if (!response.ok) throw new Error('PDF not found');
-                
-                updateProgress(40);
-                const arrayBuffer = await response.arrayBuffer();
-                const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
-                
-                updateProgress(60);
-                // Process PDF pages
-                for (let pageNum = 1; pageNum <= Math.min(pdf.numPages, 50); pageNum++) {
-                    const page = await pdf.getPage(pageNum);
-                    const textContent = await page.getTextContent();
-                    const text = textContent.items.map(item => item.str).join(' ');
-                    parseDictionaryText(text);
-                    
-                    if (pageNum % 10 === 0) {
-                        updateProgress(60 + (pageNum / pdf.numPages) * 30);
-                    }
+        // Detect language of input text
+        function detectLanguage(text) {
+            const lowerText = text.toLowerCase();
+            
+            // French indicators
+            const frenchWords = ['bonjour', 'merci', 'oui', 'non', 'comment', 'vous', 'je', 'il', 'elle', 
+                               'nous', 'ils', 'elles', 'le', 'la', 'les', 'un', 'une', 'des', 'avec', 
+                               'pour', 'dans', 'sur', 'est', 'sont', 'avoir', 'être', 'faire', 'aller'];
+            const frenchChars = ['à', 'é', 'è', 'ê', 'ë', 'î', 'ï', 'ô', 'ù', 'û', 'ü', 'ÿ', 'ç'];
+            
+            let frenchScore = 0;
+            
+            // Check for French words
+            frenchWords.forEach(word => {
+                if (lowerText.includes(' ' + word + ' ') || lowerText.startsWith(word + ' ') || lowerText.endsWith(' ' + word)) {
+                    frenchScore += 3;
                 }
-                
-                document.getElementById('processedPages').textContent = Math.min(pdf.numPages, 50);
-                
-            } catch (error) {
-                throw error;
+            });
+            
+            // Check for French accented characters
+            frenchChars.forEach(char => {
+                const count = (lowerText.match(new RegExp(char, 'g')) || []).length;
+                frenchScore += count * 2;
+            });
+            
+            // French sentence patterns
+            if (lowerText.includes('qu\'') || lowerText.includes('j\'') || lowerText.includes('l\'')) {
+                frenchScore += 2;
             }
+            
+            return frenchScore > 2 ? 'french' : 'english';
         }
         
-        // Fallback: Use extracted dictionary content
-        async function loadExtractedDictionary() {
-            updateProgress(30);
-            updateStatus('loading', '📖 Using extracted dictionary data...<br><small>Processing entries</small>');
+        // Translate text using dictionary
+        function translateSentence(text, fromLang, toLang) {
+            const lowerText = text.toLowerCase();
             
-            // Use the extracted content from your PDF
-            const dictionaryText = `
-a : quelqu'un, dans, un
-abandon : renoncer, abandonnent, abandonnons, délaisser
-able : valide, compétent, capable
-about : concernant, quelque, autour de, environ
-above : dessus, sur, au dessus, au dessus de, au delà de
-accept : agréer, agréent, acceptent, accepter, agréez
-accident : accident
-account : supputation, demande, compte
-achieve : accomplir, parvenir, achevent, achever, achevez
-across : en écharpe, au delà de, à travers, à travers
-act : agissez, agissons, agir, construire, agissent
-action : action, activité
-active : allume, voix active, actif, agissant
-add : rajouter, ajouter, ajoutent, ajoutons, additionner
-address : laïus, adressez, accostage, destination, adresser
-admit : avouer, confesser, admettez, admettons, admettent
-adult : adulte
-advance : avancez, avançons, avance, s'approcher, avancent
-adventure : aventure
-advertise : insérer, publier, annoncer, introduire
-advice : conseil
-advise : avisent, avisez, conseiller, avisons, conseillent
-affair : affaire, chose
-affect : affectez, influer, concernent, affectons
-afraid : timide, anxiété
-Africa : Afrique
-after : après, derrière, après que
-afternoon : après−midi
-afterwards : puis, ensuite
-again : de nouveau
-against : en retour, moyennant, contre
-age : viellir, viellissez, époque, viellissent, viellis
-agency : permanence, agence
-agent : agent
-agree : accordez, consentir, s'harmoniser, accordent
-agriculture : agriculture, agronomie
-aid : aider, aide, assister, secourir
-aim : visez, dgssein, mire, visons, but, peiner, visent
-air : souffle, air, éventer
-airplane : avion
-airport : aéroport
-alarm : alarmez, alarment, alarme, alarmer, alarmons
-alive : vivant
-all : toute, toute, chaque, chacun
-allow : laisser, permettre
-almost : quasiment
-alone : seul
-along : d'après, le long de
-already : déjà
-also : aussi
-although : quoique
-always : toujours, tout le temps
-America : Amérique
-American : américain, américain
-among : entre, parmi, en privé
-amount : nombre, somme, montant
-analysis : analyse
-and : et
-anger : colère, emportement
-angry : agacant
-animal : bête, animal
-announce : annoncez, introduire, annoncer, annoncent, publier
-another : autre
-answer : réponse, répondent, répondons, réponds, répliquer
-any : quelques, un, quelqu'un
-anyone : un, quelqu'un
-anything : quelque chose
-appear : apparaissent, apparaîs, sembler, apparaissez
-apple : pomme
-apply : applique, solicitez, solicitent, appliquent
-appoint : appointer, appointez, appointons, appointent
-approach : approchons, abordent, abordez, rapprochons
-appropriate : appropriez, approprient, homologue, approprions
-approve : éprouvé, approuvent, approuvez, approuver
-April : avril
-area : aire, zône
-argue : arguons, arraisonnez, arraisonner, arguent, arguez
-argument : argument
-arm : armez, arment, armer, armons, pauvre, bras
-army : armée
-around : autour de
-arrange : arranger, disposer, agençons, arrangent, agencez
-arrest : détention, arrêter, alpaguer, arrestation
-arrive : arriver, arrivons, arrivent, arrivez
-art : artistique, art
-article : article, apport, objet
-artist : artiste
-ask : demandons, demander, demandez, demandent, inveterà
-assist : assister, assistez, aider, alimenter, assistent
-assume : assumez, assument, assumer, assumons
-attach : attachent, appliquer, apposer, attachez, attachons
-attack : attaquent, attaquez, assau, accès, attaque
-attempt : démarche, attentat, attentent, requête, attentons
-attend : visiter, soigner
-attention : attention, respect
-attitude : attitude, incorporation, point de vue
-attract : alléchons, attirons, alléchez, alléchent, allécher
-August : août
-aunt : tante
-author : initiateur, auteur
-authority : autorité
-automatic : automatique
-automobile : automobile
-autumn : automnal, automne
-available : disponible, obtenable
-avoid : évitons, éviter, évitez, évitent
-away : loin, acheminement
-baby : bébé
-back : foncierère, dos, postérieur, verso, râble
-bad : mauvais, mauvais, torve
-bag : fouille, étui, sac
-balance : équilibrent, balancez, balançons, équilibrer
-ball : globuleux, bal, globe, sphère, bille, pelote
-bank : bord, riverain, rive, banque
-bar : barrent, barrons, barrer, barrez, tringle
-base : base, baser, basent, socle, basez, Assise, basons
-basic : fondamental
-battle : bataille, combat
-be : soit, sa, sois, être, soient, soyez, se sentir
-beach : plage
-bear : endurer, naîs, produire, ours, souffrir, subir
-beat : abats, battement, battirent, battent, abattîmes
-beautiful : beau
-beauty : beauté
-because : car, puisque
-become : devenons, devenez, seyons, sius, siues, devenir
-bed : planche, pucier, lit, plate−forme
-beer : bière
-before : avant de, devant, avantque, avant
-begin : commencer, commencez, embrayer, commençons
-behavior : comportement
-behind : arrière, croupe, derrière, cul
-believe : croyez, croyent, croyons, croyer, croient, crois
-belong : appartenons, faire partie de, appartiens
-below : dessous, en privé, sous, au dessous de, séquencer
-best : mieux
-better : meilleur
-between : incident, parmi, entre
-big : mailloche, grand
-bird : oiseau
-black : noir, clandestin, nègre, noire
-blue : bleu
-board : conseil
-boat : canot, embarcation, bateau
-body : corps
-book : commander, livre, comptabiliser, retenir
-born : né
-both : toutes, tous
-box : loge, récipient, boîte, coffre, boxez, coffret
-boy : serviteur
-bread : pain
-break : rompons, romps, rompre, cassent, casser, rompez
-bring : amener, apporter
-brother : frère, frangin
-brown : brun, hâlé
-build : édifient, édifiez, édifions, maçonner, charpenter
-business : affaire, marché, chose, commerce
-but : pourtant, mais, cependant, néanmoins
-butter : beurre
-buy : acheter
-by : à travers
-call : appel, appelons, manifeste, appelent, appeler
-can : peuvent, peut, puissent, pouvoir, bidon, pouvons
-Canada : Canada
-Canadian : canadien
-car : auto, automobile
-card : carte
-care : s'occuper, soin, souci
-carry : remportent, remportez, remportons, porter, portez
-case : affaire, fouille, étui, chose, cas
-cat : chat, matou, mégère, rosse
-catch : attrapez, s'allumer, capturer, intercepter
-cause : causer, causons, causent, rendre, causez, cause
-center : centrez, centrent, centrons, centre, centrer
-certain : sûr, certain, assuré
-certainly : certainement, certes, surement
-chair : siège, présidence, chaise
-chance : hasard, chance
-change : changement, changez, métamorphoser, variation
-character : caractère, signe, caractere
-charge : chargeons, grever, taxe, chargent, accablement
-check : visionner, monittoring, enrayer, chèque, enrayons
-child : enfant
-China : Chine
-Chinese : chinois
-choose : choisissons, désigner, choisir, choisissez
-Christmas : noël
-church : église
-city : cité, urbain, ville
-class : cours, leçon, classe
-clean : nettoyent, astiquer, ramoner, nettoyez, pur
-clear : net, ramoner, clair
-close : intime, proche, auprès, ferment, prochaine, fermer
-clothes : vêture, vêtements, vetements, garde robe, vêtu
-coffee : café
-cold : froid, coryza, refroidissement, rhume
-college : college
-color : colorez, colorons, colorer, colorent
-come : venu, venez, viens, provenir, venons, venir
-commercial : marchand
-common : couramment, concurremment, ordinaire, commun
-company : maison de commerce, social
-complete : clôturer, complétons, complétez, compléter
-computer : ordinateur, calculateur
-condition : conditionner, conditionnons, conditionnent, état
-consider : envisagent, considerons, envisageons, envisagez
-continue : continuons, durer, continuez, continuent
-control : controler, contrôlent, règlementation, surveiller
-cook : cuisiner, cuisinent, cuisent, cuis, cuisez, cuire
-cool : refroidir, refroidissez, refroidis, refroidissent
-copy : calquer, calquons, copions, calquent, calquez
-correct : corrigent, corriger, rectifier, corrigeons
-cost : coutez, valut, coutés, coutons, coutèrent, valus
-could : put, purent, pûmes
-count : compter, comptent, comptez, comptons, comte
-country : contrée, pays
-course : notation, trajet, leçon, trivial, met, cours
-cover : recouvrir, revêtir, bâchons, banne, bâchez, cover
-create : créez, atterrissage, créons, créer, créent
-cup : tasse
-cut : coupés, faucher, coche, hacher, coupées, coupée
-dance : danser, dansent, dansons, dansez, bal, surpat
-danger : danger, péril
-dangerous : dangereux
-dark : obscurité
-data : données, matériau, data
-date : date, rendez−vous, datent, datez, datons, datte
-daughter : fille
-day : journée, jour
-dead : mort
-deal : dispenser, distribuer
-dear : cher
-death : trépas
-December : décembre
-decide : décidons, décidez, décider, décident, se décider
-deep : viscérale, profond
-degree : licence, intitulé, titre, degré
-democratic : démocrate
-describe : décrivez, décrire, décris, décrivent, décrivons
-design : dessin, planification, dessiner, projet, croquer
-detail : détail
-develop : développent, développez, évoluer, révéler, étoffer
-development : développements, developpement, évolution
-die : meurs, mourir, mourez, mourons, décéder, meurent
-difference : différence, divergence
-different : fifféremmgnt, différent
-difficult : dur, difficile
-dinner : dîner, diner
-direct : dirigeons, dirigez, direct, guider, diriger
-director : cinéaste, directeur
-discover : dépouiller, découvres, découvrent, découvrons
-discuss : discutons, discutent, discuter, discutez
-discussion : discussion
-do : construire, poser, fais, faire, faisons, font
-doctor : médecin, docteur
-dog : clebs, chien
-dollar : dollar
-door : porte
-down : duvet, culbuter
-draw : dessinons, puiser, dessiner, dessinent, dessinez
-dream : songer, révons, songe, rêvez, rêvent, rêver de
-dress : habiller, se, vêtons, habillent, habillement, vêts
-drink : boisson, s'enivrer, boivent, boire, buvez
-drive : traquer, prise, entrainent, pousser, pourchasser
-drop : goutte, tomber
-during : durant, pendant
-each : chacun, chaque
-early : de bonne heure, précoce, tôt
-earth : mondiale
-east : est, orient
-easy : léger, facile
-eat : déjeuner, mangeons, manger, mangent, mangez
-economic : économique
-education : enseignement, éducation
-effect : effet
-eight : huit
-either : soit
-eleven : onze
-end : se dénouer, finir, terminaison, fin, finissons
-energy : énergie, poigne
-English : anglais
-enough : suffisant, passable, assez
-enter : entrent, entrons, irruption, affilier, entrer
-entire : global
-environment : milieu, environnement
-equal : égaler, égal, égalent, aligner, de suite, égalez
-equipment : appareillage, garniture, matériel, équipement
-especially : surtout, nommément, principalement
-Europe : Europe
-European : Européen
-even : soi même, plat, même, droite, égal
-evening : soirée, soir
-event : organisation, événement
-ever : jaùais
-every : toute, chacun, chaque
-everyone : chacun, tout le monde, chaque
-everything : toute
-example : exemple, ex
-except : sauf, hormis, exempter, excepter
-exist : animation, exister, existons, existez, existent
-expect : espérent, espérez, espérons, attendre
-experience : expérience
-explain : expliquer, expliquent, expliquons, expliquez
-eye : maille, oeil
-face : visage, face, affronter
-fact : factum
-fail : faillent, échouer, faillons, taper à côté, échouer
-fair : blond, exposition, foire, marché, kermesse, juste
-fall : automnal, plongeon, choyons, choir, chois, choisez
-family : famille
-far : vaste
-fast : vite, nerveux, jeûner, rapide, rapidement, ferme
-father : pere, père, dabe
-fear : angoisse, craignent, crainte, crains, craignons
-February : février
-feel : sentent, sentons, coudoyer, ressentir, palper
-few : quelques
-field : champ, arablg
-fifteen : quinze
-fifty : cinquante
-fight : combattons, rixe, combattre, combattez, combattent
-figure : chiffrons, numéral, chiffrez, compter, chiffrent
-fill : percevoir, bondons, remplis, poulain, remplissent
-final : dernierère, finale
-find : trouvent, trouvez, trouvons, trouver
-fine : tendre, amende, délicat, éminent, beau, excellent
-finger : digitale, chipoter, doigt
-finish : finissage, finir, cesser, apprêter, terminer
-fire : larguer, feu, incendiaire, ficher, incendie, tirer
-firm : social, robuste, maison de commerce, ferme, solide
-first : premier
-fish : poisson, pêchent, pêche à la ligne, pêchez, pêcher
-five : cinq
-follow : suivre, suivez, respecter, suivons, ensuivent
-food : nourriture, vivres, pâture, mets, aliment, chère
-foot : pédestre, patte, pied
-for : pour, pendant, car, durant
-force : forcez, contrainte, forçons, contraindre, forcent
-foreign : étranger
-forget : oublions, oublier, oubliez, omettre, oublient
-form : forme, formons, former, formez, forment, modelage
-forward : acheminent, acheminer, avanten, acheminons
-four : quatre
-France : France
-free : loisirs, libérer, libre, pour rien, gracieux
-French : français
-Friday : vendredi
-friend : amie, ami
-from : flamé, dès, depuis
-full : rempli, rassasié
-fun : distraction, plaisanterie, plaisir, détente
-future : avenir, futur
-game : jeu
-garden : jardin, jardin potager
-general : général, universel
-get : acquérir, harponner, venir quérir, arriver
-girl : fille
-give : donnent, donnons, donner, passer, donnez
-glass : verre, vitre
-go : vont, allez, allons, vais, vas
-God : dieux, dieu
-good : bon, richement
-government : gouvernement
-great : excellent, éminent, grand, mailloche
-green : vert
-ground : sol, foncierère, terre, terrain
-group : groupe, rassembler
-grow : croître, croissons, croissez, devenir, croîs
-hand : ouvrier, index, main
-happen : se passer, devenir, se faire, avenez, advenir
-happy : chanceux, heureuse, heureux
-have : avons, avez, avoir, aient, aie, ai, ait, ont, ayez
-he : lui, il
-head : tête, guider
-health : santé
-hear : oyons, oient, ois, oyez, ouïr, entends, entendre
-heart : coeur
-help : aide, aider, aident, secourir, aidons, assister
-her : son, sa, elle, lela, lela
-here : ici
-high : haut, sommital
-him : lui, il, lela
-his : sa, son
-history : histoire
-hold : stopper, tiens, tiennent, tenons, tenir
-home : patrie, hospice
-hope : erspérer, espérance, espérer, espoir
-hot : brûlant
-hour : heure
-house : maison, logis, logez, logent, logeons
-how : comme
-however : toutefois, cependant, tel que, pourtant, néanmoins
-human : homme
-hundred : centaine, cent
-husband : époux, mari
-I : j', moi, je
-ice : glace
-idea : trouvaille, idée, gamberge
-if : if
-important : grave, important, considérable, sortable
-in : dans, entrez
-include : incluez, incluons, inclure, contenir, incluent
-increase : agrandir, accroitre, augmentons, augmentez
-indeed : certes, vraiment
-industry : application, industrie
-information : rancard
-inside : dans, dedans, au dedans
-instead : au lieu de
-interest : intéressent, intéresser, intéressez, intéressons
-international : international
-into : dans
-issue : éditer
-it : il, elle, ce
-its : sa, son
-January : janvier
-job : métier, job, tâche, travail, fonction, emploi
-join : joignent, joindre, associer, affilier, joignez, se
-July : juillet
-June : juin
-just : juste, seulement, équitable, moral
-keep : gardons, gardent, continuer, élever, sauver
-kind : aimable, gentil, affable, esrèce, sorte, esrèce
-know : savons, sache, connais, su, connaissons, savent
-land : atterrir, aborder, prendre port, contrée, atterris
-language : parole, langage
-large : grand, mailloche
-last : dernier, durer, dernierère, durez, passé, durent
-late : tard
-later : ultérieur
-law : loi
-lead : guider, plomb, conduire, mener
-learn : apprends, apprenez, apprenons, apprennent
-least : le moins
-leave : laisser, délaisser, partir, sortons, sortent
-left : sorties, gauche, sortîmes, sortirent, sortie
-less : petiot, moindre
-let : laisser, laissâmes, laissons, laissent, laissa
-letter : missive, lettre
-level : plat, aplanissons, standing, niveau, nivelons
-life : vie, animation, vie utile
-light : camoufle, clair, allumer, allument, faible, léger
-like : de suite, comme, apprécier
-line : raie, guivre, ligne, rangée
-little : petit, peu
-live : habitation, vivons, vivent, demeurer, animation
-local : local
-long : longuement, long, vaste
-look : regardons, vision, regardez, prestige, voilà
-love : aimez, aiment, aimer, aimons, amour
-low : inférieure
-machine : machine
-make : faire, rétablir, construire, manufacturer, poser
-man : mâle, l'homme, homme
-many : tout plein, nombreux
-March : mars
-market : commercialisons, comercialisent, alinéa, foire
-may : pouvoir
-mean : prétendre, signifier
-meet : rencontrer
-member : affiliée, membre
-memory : commémorative, mémoire, entrepôt
-method : méthode, modalité
-might : pourrait
-mind : esprit, observer
-minute : minute
-miss : rater, manquons, manquent, manquer, manquez
-model : mannequin, schéma, modèle, modelez, modeler
-modern : nouveaux
-moment : moment
-Monday : lundi
-money : monnaie
-month : mois
-more : plus, de plus, davantage
-morning : matin, matinée
-most : sommital, plupart du temps
-mother : maternel, mère
-move : émeuvent, remuons, émouvez, déloger, mouvoir
-much : rudement, beaucoup
-music : musicale, musique
-must : faut, devoir, falloir
-my : mon, ma, mien, mienne
-name : qualifier, nom
-nation : peuple, nation
-national : national
-nature : nature, caractère
-near : proche, auprès, prochaine
-necessary : necessaire, nécessaire, requis
-need : indigence, avoir besoin, nécessitons, nécessitez
-never : ne jamais, jamais, ne jamais
-new : nouveau
-news : nouvelles, actualités, journal parlé
-next : puis, proche, ensuite, prochaine
-night : nuit
-nine : neuf
-no : non, pas, surtout pas, ne nulle
-north : nord
-not : pas, ne pas, non
-note : nota, annotent, notez, mention, billet, noter
-nothing : rien
-notice : affiche, discerner, avis, remarquer, écriteau
-November : novembre
-now : maintenant
-number : numéral, numérotent, numéroter, numérotez, nombre
-object : objet, dgssein
-October : octobre
-of : au delà de, de, flamé, avant de
-off : disjoncté, distant, acheminement, flamé
-offer : proposer, offrissent, offre, offris, sacrifier
-office : charge, bureau, fonction, emploi
-often : souvent
-oil : huile
-old : vieux, olda
-on : allume, au delà de
-once : anciennement, immédiatement, sitôt
-one : une, on
-only : seul, ne que, seulement, un à un
-open : ouvres, ouvert, ouvrent, entamons, ouvrez, ouvrir
-or : ou
-order : retenir, ordonner, commande, enjoindre, commandez
-organization : organisation
-other : autre, nouvel
-our : nôtre
-out : flamé, extérieur, dehors, en dehors de
-over : au delà de, deçà et delà, immodéré, flamé
-own : jouir, propre, posséder
-page : page, paginer
-paper : document, papier
-part : contingent, portion, partie, rôle, part
-particular : nommément, particulierère, particulier, spécial
-party : parti, fête
-pass : doubler, passe, dépasser, passez, passons, passage
-past : passée, passés
-pay : payent, payez, faire un versement, payer, payons
-peace : paix
-people : peuple, gens
-period : période
-person : personnage
-personal : personnel, propre
-phone : téléphone
-place : astro, endroit, déstination, plaçons, placez
-plan : planifier, planifions, intention, esquisser
-play : jouez, jeu, jouons, jouent
-please : plaisent, plaire, plaisons, plais, plaisez
-point : braquent, point, braquez, braquons, pointer, score
-political : politique
-poor : pauvre, maigre
-popular : populaire
-position : position
-possible : possible
-power : flot, puissance
-present : présenter, présentez, présente, présent, offrir
-president : président
-press : pressons, presse, serre, pressent, pressez, serrer
-pressure : instance, pression, instances
-pretty : joli
-price : tarifaire
-private : dans le privé, privé
-probably : probablement, présomptif
-problem : problème
-process : procédé, processus
-produce : produisez, produisons, génèrent, produire, produis
-program : programmer, programment, programmons, programmez
-project : projetent, projeter, projetez, projetons
-provide : obvier, approvisionnez, approvisionnons, pourvois
-public : universel, public
-purpose : dgssein, dessein, dgssein, finalité, but
-put : mises, mirent, mîmes, mis, mettons, mit, mettez
-question : questionnent, questionnons, contester, disputer
-quickly : vite, rapidement, nerveux
-quite : tout, très
-rather : certes, assez
-reach : atteindre, parviens, allonge, parvenir, préhension
-read : lisent, lue, lire, lisons, lurent, lisez, lues, lu
-ready : prêt, fini
-real : effectif, réel
-really : vraiment
-reason : raison, raisonnent, raisonnons, raisonnez, cause
-receive : phagocyter, admettre, receler, recelent, recevons
-recent : frais, récente, récement, nouveaux
-record : enregistrent, enregistrez, enregistrons, record
-red : rouge
-reduce : alléger, amenuisez, abaissez, amenuisons, réduis
-refer : référent, référons, référer, référez
-region : région
-relate : conter, raconter, se rapporter
-remain : restons, rester, restent, restez
-remember : rapellez, rapellent, rapeller, rapellons
-remove : enlevez, enlevons, emporter, emportons, emportez
-report : rapportent, rapporter, rapportons, rapportez
-represent : constituer, représentez, représentons
-require : exiger, avoir besoin, requissez, nécessitent
-research : recherchons, recherchez, recherche, rechercher
-resource : ressource
-respond : répliquons, répliquent, répliquez, répondre
-result : entraine, aboutir, aboutis, résultat, résulter
-return : retour, rembourser, reviens, reviennent, renvoyent
-right : droit, à droite, à droite, vrai
-rise : remonte, élévation, débout, surcroît
-road : chemin
-room : chambre, astro, espace
-run : courent, courons, passés, courir, courez, piste
-same : de suite
-Saturday : samedi
-say : disent, dire, disons
-school : école
-science : science
-sea : mer, marin
-season : saison
-second : second, deuxième, seconde
-section : service, fascicule, section
-see : voyez, vois, s'occuper, vision, visiter, voyons
-seem : parais, paraissons, sembler, paraissent, paraissez
-sell : écouler, vendons, vendez, bradons, bradez, brader
-send : envoyons, envoyent, envoyer, envoient, envoyez
-September : septembre
-serious : grave, considérable, sérieux, séreux
-service : messe
-set : appareil, dit
-seven : sept, cribler
-several : plusieurs
-shall : devoir
-she : elle
-short : court
-should : devoir
-show : manifester, montrent, marquer, dénoter, dénotent
-side : parti, côté, flanc
-simple : simple
-since : car, parce que, depuis, dès
-sit : couver, asseyons, asseyois, asseyez, asseyent
-six : zéro, six
-size : ampleur, pointure
-small : petit
-so : tellement, également, donc, voilà pourquoi, ainsi
-social : sociale
-society : société, club, social
-some : un peu, un, quelques, quelqu'un
-something : un peu, un peu
-sometimes : quelquefois, parfois
-son : fils
-soon : sous peu, bientôt
-sound : résonner, tonale, sonnons, sonnent, sonnez, sonner
-south : midi, sud
-space : astro, espace
-speak : parler
-special : particulier, spécial
-specific : spécifique
-stand : kiosque, stations debout, échoppe, stand
-standard : standard, étendard
-start : embrayer, démarrez, commencement, démarrent, début
-state : affirmer, règne, état, spécifier, standing
-station : gare, station
-stay : rester, résider
-still : encore, alambic, droite
-stop : cessation, stopper, récréation, bouchez, station
-story : fabliau, étage
-street : rue
-strong : salement, fort
-student : élève, étudiant
-study : étudiez, étude, étudier, étudient, étudions
-such : tel, pareille, pareil, autant
-suddenly : soudainement
-summer : été, estival
-Sunday : dimanche
-support : soutenez, appuyez, appuyons, appuyent, soutiens
-sure : assuré, sûr, certain
-system : syst, système
-table : tableau, table
-take : admettre, recevoir, prends, prenez, agréer
-talk : parlons, parlent, parler, parlez
-tax : impot, impôt, prestation
-teach : enseigner, enseignez, enseignons, enseignent
-teacher : institutrice, instituteur
-team : équipe
-technology : technologie
-tell : enjoindre, dire, charger, racontez, racontons
-ten : dix
-term : ajournement, listing
-test : essayer, test, examen, tester
-than : que
-thank : remercier, remercient, remercions, remerciez
-thank you : merci
-that : c', parce que, celui, quel, lequel, quelle, cet
-the : le, l', laquelle, qui qui, lequel, la
-their : son
-them : leur, ils, les, elles
-then : alors, ensukte, donc
-there : là, làbas, y, là
-these : celui là, ceci
-they : on, elles, ils
-thing : truc, objet, zinzin
-think : méditation, pensons, pensez, pensent, penser
-third : tierce, troisième, tiers
-this : lequel, celle−ci, celui−ci, ceci, cet
-those : celui là, ça, cela, c', ce, cet, celui là
-though : quoique
-thought : pensées, pensée, pensèrent, pensai, pensa, pensé
-three : trois
-through : prêt, pour cette raison, à travers
-Thursday : jeudi
-thus : ainsi, tellement, pour cette raison, également
-time : fois, heure, temps, cadence, durée
-to : à, avant de, en, pour, vers
-today : aujourd'hui
-together : concurremment, connexion
-tomorrow : demain
-tonight : ce soir
-too : trop, outre, aussi
-top : apogée, au dessus, suprême, chevet, obturateur
-toward : en, vers, à
-town : urbain, citadin, ville, cité
-trade : commercent, commerçons, commercez, commerce
-traditional : traditionnel
-train : escort, chemin de fer, dresser, cortège, dressage
-travel : voyagez, voyagent, voyageons, voyager
-tree : arbre
-true : vrai
-try : peiner, essayent, essayer, essayez, essayons
-Tuesday : mardi
-turn : dévier, torsion, changer, se tordre, tournons
-twelve : douze
-twenty : vingt
-two : deux
-type : type, dactylographier, écriture, taper, esrèce
-under : là dessous, sous, en privé
-understand : comprends, comprenons, comprennent, comprenez
-union : raccordement
-unit : engin, unité
-university : université
-until : jusqu'à
-up : au dessus
-upon : sur
-use : employer, usage, utiliser
-used : habitué
-user : usagère, utilisateur, usager
-usually : ordinairement
-value : chiffrer, valeur
-various : fifféremmgnt, divers
-very : très, tout
-view : gré, vue, panorama
-voice : voix
-war : guerre
-water : arrosez, coulage, arrosons, arroser, eau, flotte
-way : chemin, acheminement, manière, manière
-we : nous
-wear : porter
-weather : parieur
-Wednesday : mercredi
-week : suante, semaine
-well : puits, sain, richement
-west : couchant, ouest
-what : hein, quoi
-when : quand, lorsque
-where : où
-which : quels, quelles, quel, qui, qu', quelle
-while : tant que, durant, pendant
-white : blanc
-who : quelles, quels, qui, quelle, lequel, quel, qu'
-why : pourquoi
-wife : madame, femme, bougreesse, épouse
-will : volonté, testament
-win : gagner
-window : fenêtre, guichet, hublot
-winter : hiver
-with : avec, chez
-without : dénué de, sans
-woman : madame, morte
-word : mot
-work : ouvrer, travailler, travaillent, confusion, oeuvre
-world : mondiale, monde
-would : voudrait
-write : écrivez, écrivons, écrivent, écriture, écrire
-year : année, an
-yes : si, oui
-yesterday : hier
-yet : néanmoins, cependant, encore, pourtant, déjà
-you : te, t', on, toi, tu, vous
-young : jeune
-your : tes, son, votre, votre
-            `;
+            // Try exact match for common phrases
+            const exactMatch = dictionary.get(lowerText);
+            if (exactMatch) return exactMatch;
             
-            parseDictionaryText(dictionaryText);
-            document.getElementById('processedPages').textContent = '100+';
-        }
-        
-        // Parse dictionary text and build translation map
-        function parseDictionaryText(text) {
-            const lines = text.split('\n');
-            let entriesAdded = 0;
+            // Word-by-word translation
+            const words = text.split(/\s+/);
+            const translated = [];
             
-            for (let line of lines) {
-                line = line.trim();
-                if (!line || line.startsWith('English') || line.startsWith('the ')) continue;
+            for (let word of words) {
+                const cleanWord = word.toLowerCase().replace(/[.,!?;()]/g, '');
+                const translation = dictionary.get(cleanWord);
                 
-                const colonIndex = line.indexOf(' : ');
-                if (colonIndex > 0) {
-                    const english = line.substring(0, colonIndex).trim().toLowerCase();
-                    const french = line.substring(colonIndex + 3).split(',')[0].trim();
-                    
-                    if (english && french && english.length < 50) {
-                        dictionary.set(english, french);
-                        entriesAdded++;
-                    }
+                if (translation) {
+                    translated.push(translation);
+                } else {
+                    // Keep original word if no translation found
+                    translated.push(word);
                 }
             }
             
-            console.log(`Added ${entriesAdded} dictionary entries`);
+            return translated.join(' ');
         }
         
-        // Complete initialization
-        async function completeInit() {
-            updateProgress(90);
-            generateHindiTransliterations();
-            
-            updateProgress(100);
-            updateStatus('success', `📖 Dictionary Loaded Successfully!<br><small>${dictionary.size} entries ready</small>`);
-            
-            document.getElementById('translateBtn').disabled = false;
-            isLoaded = true;
-            updateStatistics();
-            
-            // Auto-translate initial text
-            setTimeout(translateText, 500);
-        }
-        
-        // Generate Hindi transliterations for French words
-        function generateHindiTransliterations() {
-            // This creates pronunciation guides in Hindi script
-            for (let [english, french] of dictionary) {
-                const hindiTranslit = transliterateFrenchToHindi(french);
-                // Store for later use
-            }
-        }
-        
-        // Transliterate French to Hindi script for pronunciation
+        // Convert French text to Hindi script for pronunciation
         function transliterateFrenchToHindi(frenchText) {
             let result = '';
-            const text = frenchText.toLowerCase().replace(/[^a-zA-Zàâäéèêëïîôùûüÿç\s]/g, '');
+            const text = frenchText.toLowerCase();
             
             for (let i = 0; i < text.length; i++) {
                 const char = text[i];
                 const nextChar = text[i + 1];
+                const prevChar = text[i - 1];
                 
-                // Handle French combinations
+                // Handle French digraphs and special combinations
                 if (char === 'c' && nextChar === 'h') {
                     result += 'श';
+                    i++; // Skip next character
+                } else if (char === 't' && nextChar === 'h') {
+                    result += 'थ';
+                    i++;
+                } else if (char === 'p' && nextChar === 'h') {
+                    result += 'फ';
                     i++;
                 } else if (char === 'o' && nextChar === 'u') {
                     result += 'उ';
@@ -1121,8 +416,28 @@ your : tes, son, votre, votre
                 } else if (char === 'a' && nextChar === 'i') {
                     result += 'ए';
                     i++;
+                } else if (char === 'o' && nextChar === 'i') {
+                    result += 'वा';
+                    i++;
+                } else if (char === 'e' && nextChar === 'u') {
+                    result += 'ओ';
+                    i++;
+                } else if (char === 'a' && nextChar === 'u') {
+                    result += 'ओ';
+                    i++;
+                } else if (char === 'e' && nextChar === 'n' && !prevChar) {
+                    result += 'आं';
+                    i++;
+                } else if (char === 'a' && nextChar === 'n' && !prevChar) {
+                    result += 'आं';
+                    i++;
                 } else if (char === ' ') {
                     result += ' ';
+                } else if (char === '\'') {
+                    // Skip apostrophes
+                    continue;
+                } else if (char === '-') {
+                    result += '-';
                 } else {
                     result += frenchToHindi[char] || char;
                 }
@@ -1131,137 +446,162 @@ your : tes, son, votre, votre
             return result;
         }
         
-        // Main translation function
-        function translateText() {
-            if (!isLoaded) {
-                alert('Please wait for dictionary to load!');
+        // Main processing function
+        function processText() {
+            const inputText = document.getElementById('textInput').value.trim();
+            
+            if (!inputText) {
+                alert('Please enter some text to translate!');
                 return;
             }
             
-            const englishText = document.getElementById('englishInput').value.trim().toLowerCase();
+            // Detect language
+            currentLanguage = detectLanguage(inputText);
+            currentOriginalText = inputText;
             
-            if (!englishText) {
-                alert('Please enter some English text!');
-                return;
-            }
+            // Update language detector
+            const langDisplay = currentLanguage === 'french' ? 'French 🇫🇷' : 'English 🇬🇧';
+            document.getElementById('detectedLang').textContent = langDisplay;
+            document.getElementById('languageDetector').style.display = 'block';
             
-            // Find French translation
-            let frenchTranslation = dictionary.get(englishText);
+            // Display original text
+            document.getElementById('originalOutput').innerHTML = 
+                `<strong>${inputText}</strong><br><small>Detected as: ${langDisplay}</small>`;
             
-            if (!frenchTranslation) {
-                // Try word-by-word translation
-                const words = englishText.split(' ');
-                const translations = [];
-                let foundAny = false;
+            // Translate
+            if (currentLanguage === 'french') {
+                // French to English
+                currentTranslation = translateSentence(inputText, 'french', 'english');
+                document.getElementById('translationHeader').innerHTML = '🇬🇧 English Translation';
                 
-                for (let word of words) {
-                    const cleanWord = word.replace(/[.,!?;]/g, '').trim();
-                    const translation = dictionary.get(cleanWord);
-                    if (translation) {
-                        translations.push(translation);
-                        foundAny = true;
-                    } else {
-                        translations.push(`[${word}]`);
-                    }
-                }
+                // Show Hindi transliteration for French
+                const hindiTranslit = transliterateFrenchToHindi(inputText);
+                document.getElementById('hindiTransliteration').innerHTML = hindiTranslit;
+                document.getElementById('transliterationCard').style.display = 'block';
                 
-                if (foundAny) {
-                    frenchTranslation = translations.join(' ').replace(/\[.*?\]\s*/g, '').trim();
-                } else {
-                    frenchTranslation = 'Translation not found - try simpler words';
-                }
-            }
-            
-            // Display French translation
-            document.getElementById('frenchOutput').innerHTML = 
-                `<strong style="font-size: 18px; color: #2c3e50;">${frenchTranslation}</strong>`;
-            
-            // Generate Hindi pronunciation
-            if (frenchTranslation && frenchTranslation !== 'Translation not found - try simpler words') {
-                const hindiTranslit = transliterateFrenchToHindi(frenchTranslation);
-                document.getElementById('hindiOutput').innerHTML = 
-                    `<strong style="font-size: 18px; color: #2c3e50;">${hindiTranslit}</strong>`;
-                
-                document.getElementById('frenchTranslit').innerHTML = 
-                    `<strong>Hindi Pronunciation Guide:</strong> ${hindiTranslit}`;
-                document.getElementById('frenchTranslit').style.display = 'block';
-                
-                currentFrenchText = frenchTranslation;
-                currentHindiText = hindiTranslit;
-                document.getElementById('frenchSpeakBtn').disabled = false;
-                document.getElementById('hindiSpeakBtn').disabled = false;
             } else {
-                document.getElementById('hindiOutput').innerHTML = 
-                    '<em style="color: #666;">No pronunciation available</em>';
-                document.getElementById('frenchTranslit').style.display = 'none';
-                document.getElementById('frenchSpeakBtn').disabled = true;
-                document.getElementById('hindiSpeakBtn').disabled = true;
+                // English to French
+                currentTranslation = translateSentence(inputText, 'english', 'french');
+                document.getElementById('translationHeader').innerHTML = '🇫🇷 French Translation';
+                
+                // Show Hindi transliteration for French translation
+                const hindiTranslit = transliterateFrenchToHindi(currentTranslation);
+                document.getElementById('hindiTransliteration').innerHTML = hindiTranslit;
+                document.getElementById('transliterationCard').style.display = 'block';
             }
+            
+            // Display translation
+            document.getElementById('translationOutput').innerHTML = `<strong>${currentTranslation}</strong>`;
+            
+            // Enable audio buttons
+            document.getElementById('speakOriginalBtn').disabled = false;
+            document.getElementById('speakTranslationBtn').disabled = false;
         }
         
         // Speech functions
-        function speakFrench() {
-            if (currentFrenchText && 'speechSynthesis' in window) {
+        function speakOriginal() {
+            if (currentOriginalText && 'speechSynthesis' in window) {
                 speechSynthesis.cancel();
-                const utterance = new SpeechSynthesisUtterance(currentFrenchText);
-                utterance.lang = 'fr-FR';
+                const utterance = new SpeechSynthesisUtterance(currentOriginalText);
+                utterance.lang = currentLanguage === 'french' ? 'fr-FR' : 'en-US';
                 utterance.rate = 0.7;
                 utterance.pitch = 1.0;
+                
+                // Visual feedback
+                const btn = document.getElementById('speakOriginalBtn');
+                btn.textContent = '🔊 Speaking...';
+                
+                utterance.onend = () => {
+                    btn.textContent = '🔊 Speak Original';
+                };
+                
                 speechSynthesis.speak(utterance);
             }
         }
         
-        function speakHindi() {
-            if (currentHindiText && 'speechSynthesis' in window) {
+        function speakTranslation() {
+            if (currentTranslation && 'speechSynthesis' in window) {
                 speechSynthesis.cancel();
-                const utterance = new SpeechSynthesisUtterance(currentHindiText);
-                utterance.lang = 'hi-IN';
-                utterance.rate = 0.6;
+                const utterance = new SpeechSynthesisUtterance(currentTranslation);
+                utterance.lang = currentLanguage === 'french' ? 'en-US' : 'fr-FR';
+                utterance.rate = 0.7;
                 utterance.pitch = 1.0;
+                
+                // Visual feedback
+                const btn = document.getElementById('speakTranslationBtn');
+                btn.textContent = '🗣️ Speaking...';
+                
+                utterance.onend = () => {
+                    btn.textContent = '🗣️ Speak Translation';
+                };
+                
                 speechSynthesis.speak(utterance);
             }
+        }
+        
+        // Example management
+        function showExamples(type) {
+            currentExampleType = type;
+            
+            // Update tab styling
+            document.querySelectorAll('.example-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            // Load examples
+            const grid = document.getElementById('exampleGrid');
+            grid.innerHTML = '';
+            
+            examples[type].forEach(example => {
+                const item = document.createElement('div');
+                item.className = 'example-item';
+                item.onclick = () => setExample(example.text);
+                item.innerHTML = `
+                    <div class="example-original">${example.text}</div>
+                    <div class="example-translation">${example.translation}</div>
+                `;
+                grid.appendChild(item);
+            });
+        }
+        
+        function setExample(text) {
+            document.getElementById('textInput').value = text;
+            processText();
         }
         
         // Clear all fields
         function clearAll() {
-            document.getElementById('englishInput').value = '';
-            document.getElementById('frenchOutput').innerHTML = 'Translation will appear here...';
-            document.getElementById('hindiOutput').innerHTML = 'Hindi pronunciation will appear here...';
-            document.getElementById('frenchTranslit').style.display = 'none';
-            document.getElementById('frenchSpeakBtn').disabled = true;
-            document.getElementById('hindiSpeakBtn').disabled = true;
-        }
-        
-        // Utility functions
-        function updateProgress(percent) {
-            document.getElementById('progressBar').style.width = percent + '%';
-        }
-        
-        function updateStatus(status, content) {
-            const element = document.getElementById('dictionaryStatus');
-            element.className = `status-item status-${status}`;
-            element.innerHTML = content;
-        }
-        
-        function updateStatistics() {
-            document.getElementById('totalWords').textContent = dictionary.size;
-            document.getElementById('transliterations').textContent = dictionary.size;
-            document.getElementById('statsSection').style.display = 'block';
+            document.getElementById('textInput').value = '';
+            document.getElementById('originalOutput').innerHTML = 'Your input will be cleaned and displayed here...';
+            document.getElementById('translationOutput').innerHTML = 'Translation will appear here...';
+            document.getElementById('hindiTransliteration').innerHTML = 'Hindi pronunciation guide will appear here...';
+            document.getElementById('languageDetector').style.display = 'none';
+            document.getElementById('transliterationCard').style.display = 'none';
+            document.getElementById('speakOriginalBtn').disabled = true;
+            document.getElementById('speakTranslationBtn').disabled = true;
+            currentOriginalText = '';
+            currentTranslation = '';
         }
         
         // Auto-translate on input
         let debounceTimer;
-        document.getElementById('englishInput').addEventListener('input', function() {
+        document.getElementById('textInput').addEventListener('input', function() {
             clearTimeout(debounceTimer);
             debounceTimer = setTimeout(() => {
-                if (isLoaded) translateText();
-            }, 800);
+                if (this.value.trim()) processText();
+            }, 1000);
         });
         
         // Initialize when page loads
-        window.addEventListener('load', async function() {
-            await initApp();
-            await completeInit();
+        window.addEventListener('load', function() {
+            initDictionary();
+            showExamples('english');
+            
+            // Set default example
+            setTimeout(() => {
+                setExample('Hello, how are you today?');
+            }, 500);
         });
     </script>
 </body>
